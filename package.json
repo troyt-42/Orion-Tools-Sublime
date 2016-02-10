@@ -8,6 +8,6 @@
     "url": "git://github.com/watrool/orion_reference_tool_sublime.git"
   },
   "dependencies": {
-    "tern" : "0.17.1"
+    "tern" : "0.17.0"
   }
 }
