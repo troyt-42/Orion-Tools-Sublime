@@ -47,10 +47,26 @@
 	 	__webpack_require__.p = "";
 
 	 	// Load entry module and return exports
-	 	return __webpack_require__(6);
+	 	return __webpack_require__(0);
 
 	})([
-	/* 0-3 */ 
+	/* 0-0 */
+	function(module, exports, __webpack_require__) {
+
+		var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
+
+		!(
+			__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(1), __webpack_require__(6)], 
+			__WEBPACK_AMD_DEFINE_RESULT__ = function(infer, Tern) {
+				return {
+					infer: infer,
+					Tern: Tern
+				};
+			}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), 
+			__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)
+		);
+	},
+	/* 1-3 */ 
 	function(module, exports, __webpack_require__) {
 
 		var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;// Main type inference engine
@@ -69,8 +85,8 @@
 		/* eslint-disable  */
 		(function(root, mod) {
 		  if (true) // CommonJS
-		    return mod(exports, __webpack_require__(1), __webpack_require__(2),
-		               __webpack_require__(3), __webpack_require__(4), __webpack_require__(5));
+		    return mod(exports, __webpack_require__(2), __webpack_require__(3),
+		               __webpack_require__(4), __webpack_require__(5), __webpack_require__(6));
 		})(this, function(exports, acorn, walk, def, signal, Util) {
 		  "use strict";
 
@@ -1776,7 +1792,7 @@
 		  def = exports.def = def.init({}, exports);
 		});
 	},
-	/* 1-4 */
+	/* 2-4 */
 	function(module, exports, __webpack_require__) {
 
 		var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
@@ -6357,7 +6373,7 @@
 		}));
 		/* vim: set sw=4 ts=4 et tw=80 : */
 	},
-	/* 2-5 */
+	/* 3-5 */
 	function(module, exports, __webpack_require__) {
 
 		var require;var require;/* eslint-disable  */
@@ -6791,7 +6807,7 @@
 			)(1)
 		});
 	},
-	/* 3-6 */
+	/* 4-6 */
 	function(module, exports, __webpack_require__) {
 
 		// Type description parser
@@ -7395,7 +7411,7 @@
 		  return exports;
 		});
 	},
-	/* 4-7 */
+	/* 5-7 */
 	function(module, exports, __webpack_require__) {
 
 		var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, mod) {
@@ -7425,7 +7441,7 @@
 		  };
 		});
 	},
-	/* 5-8 */
+	/* 6-8 */
 	function(module, exports, __webpack_require__) {
 
 		var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*******************************************************************************
@@ -7629,7 +7645,7 @@
 			};
 		}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	},
-	/* 6-9 */
+	/* 7-9 */
 	function(module, exports, __webpack_require__) {
 		var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;// The Tern server object
 		
@@ -7639,8 +7655,8 @@
 		/* eslint-disable */
 		(function(root, mod) {
 		  if (true) // CommonJS
-		    return mod(exports, __webpack_require__(0), __webpack_require__(4),
-		               __webpack_require__(1), __webpack_require__(2));
+		    return mod(exports, __webpack_require__(1), __webpack_require__(5),
+		               __webpack_require__(2), __webpack_require__(3));
 		})(this, function(exports, infer, signal, acorn, walk) {
 		  "use strict";
 
