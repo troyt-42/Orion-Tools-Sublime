@@ -1,0 +1,13 @@
+{
+  "name": "orionReferenceToolSublime",
+  "version": "0.0.1",
+  "author": "Zeyu Tao <taozytroy@gmail.com>",
+  "description": "A JavaScript code analyzer for deep, cross-editor language support",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/watrool/orion_reference_tool_sublime.git"
+  },
+  "dependencies": {
+    "tern" : "0.17.1"
+  }
+}
