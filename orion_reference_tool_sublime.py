@@ -8,6 +8,7 @@ class orionInstance(object):
 		self.ternServer = None
 		self.port = None
 		self.last_failed = None
+		self.files = {}
 	def start_server(self):
 		if self.ternServerStarted == False:
 			ternServer = subprocess.Popen(
@@ -47,8 +48,14 @@ class orionInstance(object):
 		self.ternServer.wait()
 		self.ternServer = None
 
+class Req_Error(Exception):
+  def __init__(self, message):
+    self.message = message
+  def __str__(self):
+    return self.message
+
 orionInstance = orionInstance()
-requestDoc = {
+testDoc = {
 	'files': [
 		{	'text': '\t\t], __WEBPACK_AMD_DEFINE_RESULT__ = function() {\n\t\t\t\n\t\t\t/**\n\t\t\t * @description Returns if the given character is upper case or not considering the locale\n\t\t\t * @param {String} string A string of at least one char14acter\n\t\t\t * @return {Boolean} True iff the first character of the given string is uppercase\n\t\t\t */\n\t\t\t function isUpperCase(string) {\n\t\t\t\tif (string.length < 1) {\n\t\t\t\treturn false;\n\t\t\t\t}\n\t\t\t\tif (isNaN(string.charCodeAt(0))) {\n\t\t\t\t\treturn false;\n\t\t\t\t}\n\t\t\t\treturn string.toLocaleUpperCase().charAt(0) === string.charAt(0);\n\t\t\t}\n\t\t\t\n\t\t\t/**\n\t\t\t * @description Match ignoring case and checking camel case.\n\t\t\t * @param {String} prefix\n\t\t\t * @param {String} target\n\t\t\t * @returns {Boolean} If the two strings match\n\t\t\t */\n\t\t\tfunction looselyMatches(prefix, target) {\n\t\t\t\tif (typeof prefix !== "string" || typeof target !== "string") {\n\t\t\t\t\treturn false;\n\t\t\t\t}\n\t', 
 			'name': 'OrionJavaScript.js', 'type': 'part', 'offset': 263533
@@ -61,6 +68,7 @@ requestDoc = {
 		'end': 370
 	}
 };
+
 class orionListeners(sublime_plugin.EventListener):
 	def on_activated(self, view):
 		print("activated")
@@ -68,11 +76,29 @@ class orionListeners(sublime_plugin.EventListener):
 
 class orionReferenceCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
+		allRegion = sublime.Region(0, self.view.size())
+		allText = self.view.substr(allRegion)
+
+		doc = {}
+
+		doc["files"] = [{
+			'text' : allText,
+			'name' : self.view.file_name(),
+			'type' : 'full'
+		}]
+
+		doc['query'] = {
+			'file' : self.view.file_name(),
+			'lineCharPositions' : True,
+			'type' : 'refs',
+			'end' : self.view.sel()[0].b #Assume only single selection
+		}
+
 		data = None
 		try:
-			data = orionInstance.send_request(requestDoc)
+			data = orionInstance.send_request(doc)
 		except Req_Error as e:
-			if not silent: report_error(str(e), pfile.project)
+			print("Error:" + e.message)
 			return None
 		except:
 			pass
