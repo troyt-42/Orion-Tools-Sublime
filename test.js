@@ -6,3 +6,6 @@ function test(){
 }
 
 test();
+test();
+test();
+test();

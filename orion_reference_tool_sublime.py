@@ -93,7 +93,6 @@ class orionReferenceCommand(sublime_plugin.TextCommand):
 			'type' : 'refs',
 			'end' : self.view.sel()[0].b #Assume only single selection
 		}
-
 		data = None
 		try:
 			data = orionInstance.send_request(doc)
@@ -102,4 +101,11 @@ class orionReferenceCommand(sublime_plugin.TextCommand):
 			return None
 		except:
 			pass
-		print(data)
+
+		if data is not None and data['refs'] is not None:
+			for ref in data['refs']:
+				startPoint = self.view.text_point(ref['start']['line'], ref['start']['ch'])
+				endPoint = self.view.text_point(ref['end']['line'], ref['end']['ch'])
+				resultedRegion = sublime.Region(startPoint, endPoint)
+				print(startPoint)
+				self.view.sel().add(resultedRegion)
