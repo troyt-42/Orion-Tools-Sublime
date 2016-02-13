@@ -1,7 +1,10 @@
 import sublime, sublime_plugin
 import os, sys, platform, subprocess, webbrowser, json, re, time, atexit
 windows = platform.system() == "Windows"
-
+env = None
+if platform.system() == "Darwin":
+	env = os.environ.copy()
+	env['PATH'] += ":/usr/local/bin"
 class orionInstance(object):
 	def __init__(self):
 		self.ternServerStarted = False
@@ -12,9 +15,9 @@ class orionInstance(object):
 	def start_server(self):
 		if self.ternServerStarted == False:
 			ternServer = subprocess.Popen(
-						["node", 'C:\\Users\\IBM_ADMIN\\AppData\\Roaming\\Sublime Text 3\\Packages\\tern_for_sublime\\node_modules/tern/bin/tern', '--no-port-file'],
+						["node", '/Users/touzeyu/Library/Application Support/Sublime Text 3/Packages/orion_reference_tool_sublime/node_modules/tern/bin/tern', '--no-port-file'],
 						cwd=None,
-						env=None,
+						env=env,
                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                         stderr=subprocess.STDOUT,
                         shell=windows)
