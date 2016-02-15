@@ -1,8 +1,8 @@
-// var orion = require("./OrionJavaScript.js");
-// var ternHttpServer = require("./node_modules/tern/bin/tern");
-var request = require("request");
-// console.log(orion.infer.findExpressionAround);
-// console.log(ternHttpServer);
+// var orionjs = require("./OrionJavaScript.js");
+// var _instance = new orionjs(useworker);
+const request = require("request");
+const fork = require("child_process").fork;
+var ternServer = fork(__dirname + "/node_modules/tern/bin/tern", ["--no-port-file"], {silent : true});
 
 var requestObj = {
 	'files': [
@@ -18,17 +18,28 @@ var requestObj = {
 	}
 };
 
+ternServer.stdout.on("data", function(data){
+	var match = data.toString().match("Listening on port (\\d+)");
+	var port = match[1];
+	if(port !== undefined || port !== null){
+		request
+		.post({url:"http://localhost:" + port + "/", body: JSON.stringify(requestObj)})
+		.on("response", function(response){
+			console.log("test");
+			var resObj = '';
+		    response.on('data', function(data) {
+		      resObj += data;
+		    });
+		    response.on('end', function(){
+		    	console.log(JSON.parse(resObj));
+		    	ternServer.kill();
+		    });
+		});
+	} else {
+		ternServer.kill()
+	}
+});
 
 
-request
-	.post({url:"http://localhost:60356/", body: JSON.stringify(requestObj)})
-	.on("response", function(response){
-		console.log("test");
-		var resObj = '';
-	    response.on('data', function(data) {
-	      resObj += data;
-	    });
-	    response.on('end', function(){
-	    	console.log(JSON.parse(resObj));
-	    });
-	});
+
+
