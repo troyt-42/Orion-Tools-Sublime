@@ -13214,7 +13214,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 16 */
 /***/ function(module, exports) {
-
+	if (typeof window === 'undefined') {
+		window = {}
+	}
 	var amdi18n={"__root":{"root":true}};amdi18n.init=function (language){
 	    if(!language){
 	        if(window._i18n && window._i18n.locale){
