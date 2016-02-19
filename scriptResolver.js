@@ -39,7 +39,7 @@ var fileClient = {
      */
     read: function read(filename) {
         var deferred = new $.Deferred();
-        fs.readFile(filename, function(err, data){
+        fs.readFile(filename,'utf-8', function(err, data){
             if (!err) {
                 deferred.resolve(data);
             }
@@ -80,7 +80,7 @@ ScriptResolver.prototype.getFileClient = function getFileClient() {
 */
 ScriptResolver.prototype.getWorkspaceFile = function getWorkspaceFile(logicalName, options) {
     if(path.isAbsolute(logicalName)) {
-        fs.readFile(logicalName, function(err, data){
+        fs.readFile(logicalName,'utf-8', function(err, data){
             if (!err) {
                 //TODO do caching
                 return _newFileObj(file.name, logicalName, logicalName, null, 'application/javascript');
