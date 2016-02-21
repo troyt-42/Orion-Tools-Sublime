@@ -8,6 +8,6 @@ A collection of plugins that provide Orion tools for Sublime.
  	* Linux: ~/.config/sublime-text-3 
 2. Run "npm install" to install the nodejs dependencies.
 
-# Screen Shot #
+# Screenshot #
 <img src="https://github.com/watrool/orion_tools_sublime/blob/master/screenshot.png">
 
