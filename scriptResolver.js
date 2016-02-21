@@ -10,8 +10,8 @@
  ******************************************************************************/
 /*globals brackets, define*/
 "use strict";
-const fs = require("fs");
-const path = require("path");
+var fs = require("fs");
+var path = require("path");
 
 var fileClient = {
     /**

@@ -94,11 +94,24 @@ class orionListeners(sublime_plugin.EventListener):
 			except:
 				pass
 
-			regions = []
+			warnings = []
+			errors = []
 			for result in data:
 				print(str(result['line'])+":"+str(result['column']), result["message"])
 				startPoint = view.text_point(result["line"]-1, result['node']['range'][0])
 				endPoint = view.text_point(result["line"]-1, result['node']['range'][1])
 				region = sublime.Region(result['node']['range'][0],  result['node']['range'][1])
-				regions.append(region)
-			view.add_regions("orionLint", regions, "keyword", "Packages/orion_reference_tool_sublime/warning.png", sublime.DRAW_NO_FILL)
+				if result['severity'] <= 1:
+					warnings.append(region)
+				else:
+					errors.append(region)
+			view.add_regions("orionLintWarnings", warnings, "keyword", "Packages/orion_tools_sublime/warning.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
+			view.add_regions("orionLintErrors", errors, "keyword", "Packages/orion_tools_sublime/error.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
+
+
+
+
+
+
+
+

@@ -101,7 +101,7 @@ app.post("/", function(req, res){
 		"content-type" : "application/json;charset=utf-8"
 	});
 	res.send(JSON.stringify(response));
-})
+});
 // var path = "C:\\Users\\IBM_ADMIN\\AppData\\Roaming\\Sublime Text 3\\Packages\\orion_reference_tool_sublime\\test.js";
 // var content = fs.readFileSync(path, "utf-8");
 // orionJS.Tern.lint(path, defaults, null, [{type: 'full', name: path, text: content}], function(result, err){
