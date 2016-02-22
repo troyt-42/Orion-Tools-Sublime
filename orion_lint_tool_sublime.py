@@ -119,26 +119,51 @@ class orionListeners(sublime_plugin.EventListener):
 			view.add_regions("orionLintErrors", errors, "keyword", "Packages/orion_tools_sublime/error.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
 			# view.window().show_quick_panel(messages, select_error_helper)
 			view.run_command("lint_window", { "messages" : messages})
+	def on_close(self, view):
+		if len(sublime.active_window().views_in_group(1)) == 0:
+			sublime.active_window().set_layout({
+			    "cols": [0, 1],
+			    "rows": [0, 1],
+			    "cells": [
+			    		[0, 0, 1, 1]
+			    		]
+			})
 
 class lintWindowCommand(sublime_plugin.TextCommand):
 	def run(self, edit, messages):
-		self.view.window().set_layout({
-		    "cols": [0, 1],
-		    "rows": [0,0.8, 1],
-		    "cells": [
-		    		[0, 0, 1, 1], 
-		    		[0, 1, 1, 2]
-		    		]
-		})
-		lint_view = self.view.window().new_file()
-		self.view.window().set_view_index(lint_view, 1, 0)
-		lint_view.set_scratch(True)
-		temp_row = 0
-		for message in messages:
-			tempPoint = lint_view.text_point(temp_row, 0)
-			lint_view.insert(edit, tempPoint, message)
-			temp_row += 1
-		lint_view.set_read_only(True)
+		first_open = True
+		if self.view.window().num_groups() > 1:
+			first_open = False
+		if first_open:
+			self.view.window().set_layout({
+			    "cols": [0, 1],
+			    "rows": [0,0.8, 1],
+			    "cells": [
+			    		[0, 0, 1, 1], 
+			    		[0, 1, 1, 2]
+			    		]
+			})
+
+		if self.view.window().active_group() == 1:
+			sublime.error_message("Wrong group selected")
+		elif len(self.view.window().views_in_group(1)) > 1:
+			sublime.error_message("Lint Window is dirty, Should keep it clean")
+		else:
+			lint_view = None
+			if len(self.view.window().views_in_group(1)) == 1:
+				lint_view = self.view.window().active_view_in_group(1)
+				lint_view.set_read_only(False)
+				lint_view.erase(edit, sublime.Region(0, self.view.size()))
+			else:
+				lint_view = self.view.window().new_file()
+				self.view.window().set_view_index(lint_view, 1, 0)
+			lint_view.set_scratch(True)
+			temp_row = 0
+			for message in messages:
+				tempPoint = lint_view.text_point(temp_row, 0)
+				lint_view.insert(edit, tempPoint, message)
+				temp_row += 1
+			lint_view.set_read_only(True)
 
 
 
