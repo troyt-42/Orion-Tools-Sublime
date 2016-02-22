@@ -9,7 +9,7 @@ A collection of plugins that provide Orion tools for Sublime.
 2. Run "npm install" to install the nodejs dependencies.
 
 # Screenshot #
-<img src="https://github.com/watrool/orion_tools_sublime/blob/master/screenshot.png">
+<img src="https://raw.githubusercontent.com/watrool/orion_tools_sublime/e2bec2d43770f2032a9e9b525d60ec6c6181a497/screenshot.png">
 <img src="https://github.com/watrool/orion_tools_sublime/blob/master/screenshot2.png">
 
 
