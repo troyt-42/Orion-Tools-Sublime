@@ -115,6 +115,6 @@ var listener = app.listen(app.get("port"), function(){
 	console.log("Listening on port " + listener.address().port);
 	process.on("SIGINT", function() { process.exit(); });
 	process.on("SIGTERM", function() { process.exit(); });
-})
+});
 
 

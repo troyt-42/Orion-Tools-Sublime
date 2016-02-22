@@ -70,13 +70,16 @@ class Req_Error(Exception):
 
 orionInstance = orionInstance()
 
-
+messages = []
+messageLocs = []
+messageStatus = []
 class orionListeners(sublime_plugin.EventListener):
 	def on_post_save(self, view):
 		def select_error_helper(x):
 			if x >= 0:
 				view.sel().clear() 
 				view.sel().add(messageLocs[x])
+				view.show_at_center(messageLocs[x])
 			else:
 				print(x)
 		if view.file_name()[len(view.file_name()) -3:] == ".js":
@@ -103,21 +106,23 @@ class orionListeners(sublime_plugin.EventListener):
 
 			warnings = []
 			errors = []
-			messages = []
-			messageLocs = []
+			del messages[:]
+			del messageLocs[:]
+			del messageStatus[:]
 			for result in data:
 				startPoint = view.text_point(result["line"]-1, result["node"]["range"][0])
 				endPoint = view.text_point(result["line"]-1, result["node"]["range"][1])
 				region = sublime.Region(result["node"]["range"][0],  result["node"]["range"][1])
 				messages.append(str(result["line"])+":"+str(result["column"])+" "+ result["message"]+"\n")
 				messageLocs.append(region)
+				messageStatus.append(True)
 				if result["severity"] <= 1:
 					warnings.append(region)
 				else:
 					errors.append(region)
 			view.add_regions("orionLintWarnings", warnings, "keyword", "Packages/orion_tools_sublime/warning.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
 			view.add_regions("orionLintErrors", errors, "keyword", "Packages/orion_tools_sublime/error.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
-			# view.window().show_quick_panel(messages, select_error_helper)
+			view.window().show_quick_panel(messages, select_error_helper)
 			view.run_command("lint_window", { "messages" : messages})
 	def on_close(self, view):
 		if len(sublime.active_window().views_in_group(1)) == 0:
@@ -128,7 +133,19 @@ class orionListeners(sublime_plugin.EventListener):
 			    		[0, 0, 1, 1]
 			    		]
 			})
-
+	def on_selection_modified(self, view):
+		if view.file_name() == None: return
+		selection = view.sel()[0] #Assume single selection
+		for index, loc in enumerate(messageLocs):
+			a = loc.a
+			b = loc.b
+			if a == selection.a and b == selection.b:
+				def close_tooltip(x):
+					if x >= 0:
+						messageStatus[index] = False
+				if messageStatus[index] == True:
+					view.show_popup_menu([messages[index] + "                    Click to close"], close_tooltip)
+				break
 class lintWindowCommand(sublime_plugin.TextCommand):
 	def run(self, edit, messages):
 		first_open = True
@@ -164,6 +181,7 @@ class lintWindowCommand(sublime_plugin.TextCommand):
 				lint_view.insert(edit, tempPoint, message)
 				temp_row += 1
 			lint_view.set_read_only(True)
+			self.view.window().focus_group(0)
 
 
 
