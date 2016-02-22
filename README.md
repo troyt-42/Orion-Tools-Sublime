@@ -10,4 +10,6 @@ A collection of plugins that provide Orion tools for Sublime.
 
 # Screenshot #
 <img src="https://github.com/watrool/orion_tools_sublime/blob/master/screenshot.png">
+<img src="https://github.com/watrool/orion_tools_sublime/blob/master/screenshot2.png">
+
 
