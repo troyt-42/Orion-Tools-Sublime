@@ -70,8 +70,15 @@ class Req_Error(Exception):
 
 orionInstance = orionInstance()
 
+
 class orionListeners(sublime_plugin.EventListener):
 	def on_post_save(self, view):
+		def select_error_helper(x):
+			if x >= 0:
+				view.sel().clear() 
+				view.sel().add(messageLocs[x])
+			else:
+				print(x)
 		if view.file_name()[len(view.file_name()) -3:] == ".js":
 			orionInstance.start_server()
 			allRegion = sublime.Region(0, view.size())
@@ -96,17 +103,42 @@ class orionListeners(sublime_plugin.EventListener):
 
 			warnings = []
 			errors = []
+			messages = []
+			messageLocs = []
 			for result in data:
-				print(str(result['line'])+":"+str(result['column']), result["message"])
-				startPoint = view.text_point(result["line"]-1, result['node']['range'][0])
-				endPoint = view.text_point(result["line"]-1, result['node']['range'][1])
-				region = sublime.Region(result['node']['range'][0],  result['node']['range'][1])
-				if result['severity'] <= 1:
+				startPoint = view.text_point(result["line"]-1, result["node"]["range"][0])
+				endPoint = view.text_point(result["line"]-1, result["node"]["range"][1])
+				region = sublime.Region(result["node"]["range"][0],  result["node"]["range"][1])
+				messages.append(str(result["line"])+":"+str(result["column"])+" "+ result["message"]+"\n")
+				messageLocs.append(region)
+				if result["severity"] <= 1:
 					warnings.append(region)
 				else:
 					errors.append(region)
 			view.add_regions("orionLintWarnings", warnings, "keyword", "Packages/orion_tools_sublime/warning.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
 			view.add_regions("orionLintErrors", errors, "keyword", "Packages/orion_tools_sublime/error.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
+			# view.window().show_quick_panel(messages, select_error_helper)
+			view.run_command("lint_window", { "messages" : messages})
+
+class lintWindowCommand(sublime_plugin.TextCommand):
+	def run(self, edit, messages):
+		self.view.window().set_layout({
+		    "cols": [0, 1],
+		    "rows": [0,0.8, 1],
+		    "cells": [
+		    		[0, 0, 1, 1], 
+		    		[0, 1, 1, 2]
+		    		]
+		})
+		lint_view = self.view.window().new_file()
+		self.view.window().set_view_index(lint_view, 1, 0)
+		lint_view.set_scratch(True)
+		temp_row = 0
+		for message in messages:
+			tempPoint = lint_view.text_point(temp_row, 0)
+			lint_view.insert(edit, tempPoint, message)
+			temp_row += 1
+		lint_view.set_read_only(True)
 
 
 
