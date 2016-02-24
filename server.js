@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({extended:false, verify: function(req, res, buf, e
 }}));
 
 app.set("port", process.env.PORT || 0);
-var fs = require("fs");
+// var fs = require("fs");
 var defaults = {
 	"accessor-pairs" : 1,
 	"curly" : 0,

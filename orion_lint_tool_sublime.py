@@ -73,8 +73,19 @@ orionInstance = orionInstance()
 messages = []
 messageLocs = []
 messageStatus = []
+globalVariables = []
 class orionListeners(sublime_plugin.EventListener):
 	def on_post_save(self, view):
+		if os.path.isfile('orion_global_variables.txt'):
+			globalVariableFile = open('orion_global_variables.txt', 'r');
+			globalVariables = []
+			for line in globalVariableFile:
+				for var in line.split():
+					globalVariables.append(var)
+		else:
+			globalVariableFile = open('orion_global_variables.txt', 'a');
+			globalVariableFile.close()
+		print(globalVariables)
 		def select_error_helper(x):
 			if x >= 0:
 				view.sel().clear() 
@@ -110,6 +121,11 @@ class orionListeners(sublime_plugin.EventListener):
 			del messageLocs[:]
 			del messageStatus[:]
 			for result in data:
+				undefError = result["ruleId"] == "no-undef"
+				if undefError:
+					temp = result["message"].split('\'')[1]
+					if temp in globalVariables:
+						continue
 				startPoint = view.text_point(result["line"]-1, result["node"]["range"][0])
 				endPoint = view.text_point(result["line"]-1, result["node"]["range"][1])
 				region = sublime.Region(result["node"]["range"][0],  result["node"]["range"][1])
@@ -148,41 +164,49 @@ class orionListeners(sublime_plugin.EventListener):
 				break
 class lintWindowCommand(sublime_plugin.TextCommand):
 	def run(self, edit, messages):
-		first_open = True
-		if self.view.window().num_groups() > 1:
-			first_open = False
-		if first_open:
-			self.view.window().set_layout({
+		if len(messages) > 0:
+			first_open = True
+			if self.view.window().num_groups() > 1:
+				first_open = False
+			if first_open:
+				self.view.window().set_layout({
+				    "cols": [0, 1],
+				    "rows": [0,0.8, 1],
+				    "cells": [
+				    		[0, 0, 1, 1], 
+				    		[0, 1, 1, 2]
+				    		]
+				})
+
+			if self.view.window().active_group() == 1:
+				sublime.error_message("Wrong group selected")
+			elif len(self.view.window().views_in_group(1)) > 1:
+				sublime.error_message("Lint Window is dirty, Should keep it clean")
+			else:
+				lint_view = None
+				if len(self.view.window().views_in_group(1)) == 1:
+					lint_view = self.view.window().active_view_in_group(1)
+					lint_view.set_read_only(False)
+					lint_view.erase(edit, sublime.Region(0, self.view.size()))
+				else:
+					lint_view = self.view.window().new_file()
+					self.view.window().set_view_index(lint_view, 1, 0)
+				lint_view.set_scratch(True)
+				temp_row = 0
+				for message in messages:
+					tempPoint = lint_view.text_point(temp_row, 0)
+					lint_view.insert(edit, tempPoint, message)
+					temp_row += 1
+				lint_view.set_read_only(True)
+				self.view.window().focus_group(0)
+		else:
+			sublime.active_window().set_layout({
 			    "cols": [0, 1],
-			    "rows": [0,0.8, 1],
+			    "rows": [0, 1],
 			    "cells": [
-			    		[0, 0, 1, 1], 
-			    		[0, 1, 1, 2]
+			    		[0, 0, 1, 1]
 			    		]
 			})
-
-		if self.view.window().active_group() == 1:
-			sublime.error_message("Wrong group selected")
-		elif len(self.view.window().views_in_group(1)) > 1:
-			sublime.error_message("Lint Window is dirty, Should keep it clean")
-		else:
-			lint_view = None
-			if len(self.view.window().views_in_group(1)) == 1:
-				lint_view = self.view.window().active_view_in_group(1)
-				lint_view.set_read_only(False)
-				lint_view.erase(edit, sublime.Region(0, self.view.size()))
-			else:
-				lint_view = self.view.window().new_file()
-				self.view.window().set_view_index(lint_view, 1, 0)
-			lint_view.set_scratch(True)
-			temp_row = 0
-			for message in messages:
-				tempPoint = lint_view.text_point(temp_row, 0)
-				lint_view.insert(edit, tempPoint, message)
-				temp_row += 1
-			lint_view.set_read_only(True)
-			self.view.window().focus_group(0)
-
 
 
 
