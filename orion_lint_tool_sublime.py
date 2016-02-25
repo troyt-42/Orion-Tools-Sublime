@@ -2,7 +2,7 @@ import sublime, sublime_plugin
 import os, sys, platform, subprocess, signal, webbrowser, json, re, time, atexit
 windows = platform.system() == "Windows"
 env = None
-
+pluginDir = os.path.abspath(os.path.dirname(__file__))
 if platform.system() == "Darwin":
 	env = os.environ.copy()
 	env["PATH"] += ":/usr/local/bin"
@@ -28,7 +28,7 @@ class orionInstance(object):
 				startupinfo = subprocess.STARTUPINFO()
 				startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 			orionServer = subprocess.Popen(
-						["node", "server.js"],
+						["node", pluginDir+"/server.js"],
 						cwd=None,
 						env=env,
                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -85,7 +85,6 @@ class orionListeners(sublime_plugin.EventListener):
 		else:
 			globalVariableFile = open('orion_global_variables.txt', 'a');
 			globalVariableFile.close()
-		print(globalVariables)
 		def select_error_helper(x):
 			if x >= 0:
 				view.sel().clear() 
@@ -200,6 +199,10 @@ class lintWindowCommand(sublime_plugin.TextCommand):
 				lint_view.set_read_only(True)
 				self.view.window().focus_group(0)
 		else:
+			if self.view.window().num_groups() == 2:
+				views = self.view.window().views_in_group(1)
+				for i in range(len(views)):
+					views[i].close()
 			sublime.active_window().set_layout({
 			    "cols": [0, 1],
 			    "rows": [0, 1],
