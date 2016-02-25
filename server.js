@@ -1,5 +1,5 @@
 var scriptResolver = require("./scriptResolver.js");
-var orionJSLib = require("./OrionJavaScript.js");
+var orionJSLib = require("./OrionJavaScript.min.js");
 var orionJS = new orionJSLib(new scriptResolver(), false);
 var express = require("express");
 var app = express();
