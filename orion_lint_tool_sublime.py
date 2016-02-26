@@ -77,13 +77,13 @@ globalVariables = []
 class orionListeners(sublime_plugin.EventListener):
 	def on_post_save(self, view):
 		if os.path.isfile('orion_global_variables.txt'):
-			globalVariableFile = open('orion_global_variables.txt', 'r');
+			globalVariableFile = open(pluginDir+'/orion_global_variables.txt', 'r');
 			globalVariables = []
 			for line in globalVariableFile:
 				for var in line.split():
 					globalVariables.append(var)
 		else:
-			globalVariableFile = open('orion_global_variables.txt', 'a');
+			globalVariableFile = open(pluginDir+'/orion_global_variables.txt', 'a');
 			globalVariableFile.close()
 		def select_error_helper(x):
 			if x >= 0:
@@ -119,25 +119,26 @@ class orionListeners(sublime_plugin.EventListener):
 			del messages[:]
 			del messageLocs[:]
 			del messageStatus[:]
-			for result in data:
-				undefError = result["ruleId"] == "no-undef"
-				if undefError:
-					temp = result["message"].split('\'')[1]
-					if temp in globalVariables:
-						continue
-				startPoint = view.text_point(result["line"]-1, result["node"]["range"][0])
-				endPoint = view.text_point(result["line"]-1, result["node"]["range"][1])
-				region = sublime.Region(result["node"]["range"][0],  result["node"]["range"][1])
-				messages.append(str(result["line"])+":"+str(result["column"])+" "+ result["message"]+"\n")
-				messageLocs.append(region)
-				messageStatus.append(True)
-				if result["severity"] <= 1:
-					warnings.append(region)
-				else:
-					errors.append(region)
-			view.add_regions("orionLintWarnings", warnings, "keyword", "Packages/orion_tools_sublime/warning.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
-			view.add_regions("orionLintErrors", errors, "keyword", "Packages/orion_tools_sublime/error.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
-			view.window().show_quick_panel(messages, select_error_helper)
+			if data != None:
+				for result in data:
+					undefError = result["ruleId"] == "no-undef"
+					if undefError:
+						temp = result["message"].split('\'')[1]
+						if temp in globalVariables:
+							continue
+					startPoint = view.text_point(result["line"]-1, result["node"]["range"][0])
+					endPoint = view.text_point(result["line"]-1, result["node"]["range"][1])
+					region = sublime.Region(result["node"]["range"][0],  result["node"]["range"][1])
+					messages.append(str(result["line"])+":"+str(result["column"])+" "+ result["message"]+"\n")
+					messageLocs.append(region)
+					messageStatus.append(True)
+					if result["severity"] <= 1:
+						warnings.append(region)
+					else:
+						errors.append(region)
+				view.add_regions("orionLintWarnings", warnings, "keyword", "Packages/orion_tools_sublime/warning.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
+				view.add_regions("orionLintErrors", errors, "keyword", "Packages/orion_tools_sublime/error.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
+				view.window().show_quick_panel(messages, select_error_helper)
 			view.run_command("lint_window", { "messages" : messages})
 	def on_close(self, view):
 		if len(sublime.active_window().views_in_group(1)) == 0:
@@ -197,7 +198,7 @@ class lintWindowCommand(sublime_plugin.TextCommand):
 					lint_view.insert(edit, tempPoint, message)
 					temp_row += 1
 				lint_view.set_read_only(True)
-				self.view.window().focus_group(0)
+				self.view.window().focus_view(self.view)
 		else:
 			if self.view.window().num_groups() == 2:
 				views = self.view.window().views_in_group(1)
