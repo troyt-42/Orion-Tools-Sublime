@@ -1,8 +1,11 @@
 import sublime, sublime_plugin
 import os, sys, platform, subprocess, signal, webbrowser, json, re, time, atexit
+sys.path.append(os.path.join(os.path.dirname(__file__)))
+from orionFixesLib import quickFixesLib
 windows = platform.system() == "Windows"
 env = None
 pluginDir = os.path.abspath(os.path.dirname(__file__))
+quickFixesInstance = quickFixesLib()
 if platform.system() == "Darwin":
 	env = os.environ.copy()
 	env["PATH"] += ":/usr/local/bin"
@@ -74,6 +77,7 @@ messages = []
 messageLocs = []
 messageStatus = []
 globalVariables = []
+quickFixes = []
 class orionListeners(sublime_plugin.EventListener):
 	def on_post_save(self, view):
 		if os.path.isfile('orion_global_variables.txt'):
@@ -136,6 +140,7 @@ class orionListeners(sublime_plugin.EventListener):
 						warnings.append(region)
 					else:
 						errors.append(region)
+					quickFixes.append(quickFixesInstance.defaultFixes.get(result["ruleId"],None))
 				view.add_regions("orionLintWarnings", warnings, "keyword", "Packages/orion_tools_sublime/warning.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
 				view.add_regions("orionLintErrors", errors, "keyword", "Packages/orion_tools_sublime/error.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
 				view.window().show_quick_panel(messages, select_error_helper)
@@ -157,10 +162,15 @@ class orionListeners(sublime_plugin.EventListener):
 			b = loc.b
 			if a == selection.a and b == selection.b:
 				def close_tooltip(x):
-					if x >= 0:
+					if x == 0:
 						messageStatus[index] = False
+					elif x == 1:
+						#call run_command
 				if messageStatus[index] == True:
-					view.show_popup_menu([messages[index] + "                    Click to close"], close_tooltip)
+					if quickFixes[index] == None:
+						view.show_popup_menu([messages[index] + "                    Click to close"], close_tooltip)
+					else:
+						view.show_popup_menu([messages[index] + "                    Click to close", "Quick Fix"], close_tooltip)
 				break
 class lintWindowCommand(sublime_plugin.TextCommand):
 	def run(self, edit, messages):

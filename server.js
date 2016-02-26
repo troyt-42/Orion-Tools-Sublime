@@ -1,9 +1,9 @@
 var scriptResolver = require("./scriptResolver.js");
-var orionJSLib = require("./OrionJavaScriptWithQuickFixes.js");
+var orionJSLib = require("./OrionJavaScript.min.js");
 var orionJS = new orionJSLib(new scriptResolver(), false);
 var express = require("express");
 var app = express();
-var bodyParser = require("body-parser");
+var bodyParser = require("body-parser")
 
 var data = "";
 app.use(bodyParser.json());
@@ -83,25 +83,25 @@ var defaults = {
 	"valid-typeof" : 2
 };
 
-app.all("/", function(req, res){
-	// var files = data.files;
-	// var response = null;
-	// for (var i = files.length - 1; i >= 0; i--) {
-	// 	var file = files[i];
-	// 	var text = file.text;
-	// 	var name = file.name;
-	// 	var type = file.type;
-	// 	orionJS.Tern.lint(name, defaults, null, [{type: type, name: name, text: text}], function(result, err){
-	// 		if(!err){
-	// 			response = result;
-	// 		}
-	// 	});
-	// }
-	console.log(orionJS.quickFixes);
-	// res.set({
-	// 	"content-type" : "application/json;charset=utf-8"
-	// });
-	res.send(JSON.stringify({}));
+app.post("/", function(req, res){
+	var files = data.files;
+	var response = null;
+	for (var i = files.length - 1; i >= 0; i--) {
+		var file = files[i];
+		var text = file.text;
+		var name = file.name;
+		var type = file.type;
+		orionJS.Tern.lint(name, defaults, null, [{type: type, name: name, text: text}], function(result, err){
+			if(!err){
+				response = result;
+			}
+		});
+	}
+	// console.log(orionJS.quickFixes);
+	res.set({
+		"content-type" : "application/json;charset=utf-8"
+	});
+	res.send(JSON.stringify(response));
 });
 // var path = "C:\\Users\\IBM_ADMIN\\AppData\\Roaming\\Sublime Text 3\\Packages\\orion_reference_tool_sublime\\test.js";
 // var content = fs.readFileSync(path, "utf-8");
