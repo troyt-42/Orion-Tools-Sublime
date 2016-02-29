@@ -40882,6 +40882,39 @@ return /******/ (function(modules) { // webpackBootstrap
 						}
 					}
 					return {};
+				},
+				"no-undef": function(data){
+					text = data["text"];
+					annotation = data["annotation"];	
+					function assignLike(node) {
+		                if(node && node.parents && node.parents.length > 0 && node.type === 'Identifier') {
+		                    var parent = node.parents.pop();
+		                    return parent && (parent.type === 'AssignmentExpression' || parent.type === 'UpdateExpression'); 
+		                }
+		                return false;
+	            	}
+	            	var name = /'(.*)'/.exec(annotation.title);
+	            	if(name !== null && typeof name !== 'undefined') {
+	                	ast = astManager.parse(text, "unknown");
+                    	var comment = null;
+                    	var start = 0;
+                    	var insert = name[1];
+                    	var node = Finder.findNode(annotation.start, ast, {parents:true});
+                    	if(assignLike(node)) {
+                        	insert += ':true'; //$NON-NLS-1$
+                    	}
+	                    comment = Finder.findDirective(ast, 'globals'); //$NON-NLS-1$
+	                    if(comment) {
+	                        start = comment.range[0]+2;
+	                        return {"point" : start+comment.value.length, "text" : insert}; //$NON-NLS-1$
+	                    }
+                        var point = getDirectiveInsertionPoint(ast);
+                    	var linestart = getLineStart(ast.source, point);
+                    	var indent = computeIndent(ast.source, linestart, false);
+               			var fix = '/*globals '+insert+' */\n' + indent; //$NON-NLS-1$ //$NON-NLS-2$
+                        return {"point" : point, "text" : fix};
+	            	}
+	            	return name;
 				}
 			}
 		}

@@ -97,15 +97,15 @@ app.post("/", function(req, res){
 			}
 		});
 	}
-	// console.log(orionJS.quickFixes);
 	res.set({
 		"content-type" : "application/json;charset=utf-8"
 	});
 	res.send(JSON.stringify(response));
 });
 
-app.post("/radixFix", function(req, res){
-	res.send(JSON.stringify(orionJS.quickFixes.retrieveFix("radix")(data)));
+app.post("/quickFixes", function(req, res){
+	var id = data.id;
+	res.send(JSON.stringify(orionJS.quickFixes.retrieveFix(id)(data)));
 });
 // var path = "C:\\Users\\IBM_ADMIN\\AppData\\Roaming\\Sublime Text 3\\Packages\\orion_reference_tool_sublime\\test.js";
 // var content = fs.readFileSync(path, "utf-8");

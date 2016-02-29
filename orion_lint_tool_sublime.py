@@ -75,15 +75,40 @@ class quickFixesLib():
 	def __init__(self):
 		self.defaultFixes = {
 			"curly" : self.curlyFix,
+			"no-undef" : self.noUndefFix,
 			"radix" : self.radixFix,
 			"semi" : self.semiFix
 		}
 	@staticmethod
-	def curlyFix(view, edit, errStart, errEnd):
+	def curlyFix(view, edit,index, errStart, errEnd):
 		view.insert(edit, errStart, "{  ")
 		view.insert(edit, errEnd+3, "  }")
 	@staticmethod
-	def radixFix(view, edit, errStart, errEnd):
+	def noUndefFix(view, edit,index, errStart, errEnd):
+		allRegion = sublime.Region(0, view.size())
+		allText = view.substr(allRegion)
+
+		doc = {
+	    	"text" : allText,
+	    	"annotation" : {
+	    		"start" : errStart,
+	    		"end" : errEnd,
+	    		"title" : messages[index]
+	    	},
+	    	"id":"no-undef"
+	    }
+		data = None
+		try:
+			data = orionInstance.send_request(doc, "/quickFixes")
+		except Req_Error as e:
+			print("Error:" + e.message)
+			return None
+		except:
+			pass
+		if data is not None:
+			view.insert(edit, data["point"], data["text"])
+	@staticmethod
+	def radixFix(view, edit,index, errStart, errEnd):
 		allRegion = sublime.Region(0, view.size())
 		allText = view.substr(allRegion)
 		doc = {
@@ -91,12 +116,13 @@ class quickFixesLib():
 	    	"annotation" : {
 	    		"start" : errStart,
 	    		"end" : errEnd
-	    	}
+	    	},
+	    	"id":"radix"
 	    }
 	    
 		data = None
 		try:
-			data = orionInstance.send_request(doc, "/radixFix")
+			data = orionInstance.send_request(doc, "/quickFixes")
 		except Req_Error as e:
 			print("Error:" + e.message)
 			return None
@@ -104,7 +130,7 @@ class quickFixesLib():
 			pass
 		view.insert(edit, data["start"], data["text"])
 	@staticmethod
-	def semiFix(view, edit, errStart, errEnd):
+	def semiFix(view, edit,index, errStart, errEnd):
 		print(errStart)
 		view.insert(edit, errEnd, ";")
 
@@ -279,7 +305,7 @@ class orionTooltipCommand(sublime_plugin.TextCommand):
 				break
 class executeFixes(sublime_plugin.TextCommand):
 	def run(self, edit, index, errStart, errEnd):
-		quickFixes[index](self.view, edit, errStart, errEnd)
+		quickFixes[index](self.view, edit, index, errStart, errEnd)
 		self.view.run_command("orion_lint")
 
 
