@@ -1,9 +1,9 @@
 var scriptResolver = require("./scriptResolver.js");
-var orionJSLib = require("./OrionJavaScript.min.js");
+var orionJSLib = require("./OrionJavaScriptWithQuickFixes.js");
 var orionJS = new orionJSLib(new scriptResolver(), false);
 var express = require("express");
 var app = express();
-var bodyParser = require("body-parser")
+var bodyParser = require("body-parser");
 
 var data = "";
 app.use(bodyParser.json());
@@ -22,7 +22,7 @@ app.set("port", process.env.PORT || 0);
 // var fs = require("fs");
 var defaults = {
 	"accessor-pairs" : 1,
-	"curly" : 0,
+	"curly" : 1,
 	"eqeqeq": 1,
 	"missing-doc" : 0, 
 	"missing-nls" : 0,
@@ -102,6 +102,10 @@ app.post("/", function(req, res){
 		"content-type" : "application/json;charset=utf-8"
 	});
 	res.send(JSON.stringify(response));
+});
+
+app.post("/radixFix", function(req, res){
+	res.send(JSON.stringify(orionJS.quickFixes.retrieveFix("radix")(data)));
 });
 // var path = "C:\\Users\\IBM_ADMIN\\AppData\\Roaming\\Sublime Text 3\\Packages\\orion_reference_tool_sublime\\test.js";
 // var content = fs.readFileSync(path, "utf-8");

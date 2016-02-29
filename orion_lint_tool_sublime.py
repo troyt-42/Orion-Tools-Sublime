@@ -1,11 +1,10 @@
 import sublime, sublime_plugin
 import os, sys, platform, subprocess, signal, webbrowser, json, re, time, atexit
 sys.path.append(os.path.join(os.path.dirname(__file__)))
-from orionFixesLib import quickFixesLib
 windows = platform.system() == "Windows"
 env = None
 pluginDir = os.path.abspath(os.path.dirname(__file__))
-quickFixesInstance = quickFixesLib()
+
 if platform.system() == "Darwin":
 	env = os.environ.copy()
 	env["PATH"] += ":/usr/local/bin"
@@ -54,11 +53,11 @@ class orionInstance(object):
 					return port
 				else:
 					output += line
-	def send_request(self, doc):
+	def send_request(self, doc, url="/"):
 		import urllib.request,  urllib.error
 		opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 		try:
-			req = opener.open("http://localhost:" + str(self.port) + "/", json.dumps(doc).encode("utf-8"), 1)
+			req = opener.open("http://localhost:" + str(self.port) + url, json.dumps(doc).encode("utf-8"), 1)
 			return json.loads(req.read().decode("utf-8"))
 		except urllib.error.URLError as error:
 			raise Req_Error(error.read().decode("utf-8"))
@@ -71,8 +70,48 @@ class Req_Error(Exception):
   def __str__(self):
     return self.message
 
-orionInstance = orionInstance()
 
+class quickFixesLib():
+	def __init__(self):
+		self.defaultFixes = {
+			"curly" : self.curlyFix,
+			"radix" : self.radixFix,
+			"semi" : self.semiFix
+		}
+	@staticmethod
+	def curlyFix(view, edit, errStart, errEnd):
+		view.insert(edit, errStart, "{  ")
+		view.insert(edit, errEnd+3, "  }")
+	@staticmethod
+	def radixFix(view, edit, errStart, errEnd):
+		allRegion = sublime.Region(0, view.size())
+		allText = view.substr(allRegion)
+		doc = {
+	    	"text" : allText,
+	    	"annotation" : {
+	    		"start" : errStart,
+	    		"end" : errEnd
+	    	}
+	    }
+	    
+
+		data = None
+		try:
+			data = orionInstance.send_request(doc, "/radixFix")
+		except Req_Error as e:
+			print("Error:" + e.message)
+			return None
+		except:
+			pass
+		print(data)
+		view.insert(edit, data["start"]-1, data["text"])
+	@staticmethod
+	def semiFix(view, edit, errStart, errEnd):
+		print(errStart)
+		view.insert(edit, errEnd, ";")
+
+orionInstance = orionInstance()
+quickFixesInstance = quickFixesLib()
 messages = []
 messageLocs = []
 messageStatus = []
@@ -80,6 +119,21 @@ globalVariables = []
 quickFixes = []
 class orionListeners(sublime_plugin.EventListener):
 	def on_post_save(self, view):
+		print("dfa")
+		view.run_command("orion_lint")
+	def on_close(self, view):
+		if len(sublime.active_window().views_in_group(1)) == 0:
+			sublime.active_window().set_layout({
+			    "cols": [0, 1],
+			    "rows": [0, 1],
+			    "cells": [
+			    		[0, 0, 1, 1]
+			    		]
+			})
+	def on_selection_modified(self, view):
+		view.run_command("orion_tooltip")
+class orionLintCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
 		if os.path.isfile('orion_global_variables.txt'):
 			globalVariableFile = open(pluginDir+'/orion_global_variables.txt', 'r');
 			globalVariables = []
@@ -91,20 +145,21 @@ class orionListeners(sublime_plugin.EventListener):
 			globalVariableFile.close()
 		def select_error_helper(x):
 			if x >= 0:
-				view.sel().clear() 
-				view.sel().add(messageLocs[x])
-				view.show_at_center(messageLocs[x])
+				self.view.sel().clear() 
+				self.view.sel().add(messageLocs[x])
+				# self.view.show_at_center(messageLocs[x])
+				self.view.run_command("orion_tooltip")
 			else:
-				print(x)
-		if view.file_name()[len(view.file_name()) -3:] == ".js":
+				pass
+		if self.view.file_name()[len(self.view.file_name()) -3:] == ".js":
 			orionInstance.start_server()
-			allRegion = sublime.Region(0, view.size())
-			allText = view.substr(allRegion)
+			allRegion = sublime.Region(0, self.view.size())
+			allText = self.view.substr(allRegion)
 
 			doc = {
 				"files":[{
 					"text" : allText,
-					"name" : view.file_name(),
+					"name" : self.view.file_name(),
 					"type" : "full"
 				}]
 			}
@@ -123,55 +178,31 @@ class orionListeners(sublime_plugin.EventListener):
 			del messages[:]
 			del messageLocs[:]
 			del messageStatus[:]
+			del quickFixes[:]
 			if data != None:
 				for result in data:
-					undefError = result["ruleId"] == "no-undef"
+					undefError = result.get("ruleId", None) == "no-undef"
 					if undefError:
 						temp = result["message"].split('\'')[1]
 						if temp in globalVariables:
 							continue
-					startPoint = view.text_point(result["line"]-1, result["node"]["range"][0])
-					endPoint = view.text_point(result["line"]-1, result["node"]["range"][1])
-					region = sublime.Region(result["node"]["range"][0],  result["node"]["range"][1])
+					region = None
+					if result.get("related", None) != None and result["related"].get("range", None) != None:
+						region = sublime.Region(result["related"]["range"][0],  result["related"]["range"][1])
+					else:
+						region = sublime.Region(result["node"]["range"][0],  result["node"]["range"][1])
 					messages.append(str(result["line"])+":"+str(result["column"])+" "+ result["message"]+"\n")
 					messageLocs.append(region)
 					messageStatus.append(True)
-					if result["severity"] <= 1:
+					if result.get("severity", 0) <= 1:
 						warnings.append(region)
 					else:
 						errors.append(region)
-					quickFixes.append(quickFixesInstance.defaultFixes.get(result["ruleId"],None))
-				view.add_regions("orionLintWarnings", warnings, "keyword", "Packages/orion_tools_sublime/warning.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
-				view.add_regions("orionLintErrors", errors, "keyword", "Packages/orion_tools_sublime/error.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
-				view.window().show_quick_panel(messages, select_error_helper)
-			view.run_command("lint_window", { "messages" : messages})
-	def on_close(self, view):
-		if len(sublime.active_window().views_in_group(1)) == 0:
-			sublime.active_window().set_layout({
-			    "cols": [0, 1],
-			    "rows": [0, 1],
-			    "cells": [
-			    		[0, 0, 1, 1]
-			    		]
-			})
-	def on_selection_modified(self, view):
-		if view.file_name() == None: return
-		selection = view.sel()[0] #Assume single selection
-		for index, loc in enumerate(messageLocs):
-			a = loc.a
-			b = loc.b
-			if a == selection.a and b == selection.b:
-				def close_tooltip(x):
-					if x == 0:
-						messageStatus[index] = False
-					elif x == 1:
-						#call run_command
-				if messageStatus[index] == True:
-					if quickFixes[index] == None:
-						view.show_popup_menu([messages[index] + "                    Click to close"], close_tooltip)
-					else:
-						view.show_popup_menu([messages[index] + "                    Click to close", "Quick Fix"], close_tooltip)
-				break
+					quickFixes.append(quickFixesInstance.defaultFixes.get(result.get("ruleId", "None"),None))
+				self.view.add_regions("orionLintWarnings", warnings, "keyword", "Packages/orion_tools_sublime/warning.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
+				self.view.add_regions("orionLintErrors", errors, "keyword", "Packages/orion_tools_sublime/error.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
+				self.view.window().show_quick_panel(messages, select_error_helper)
+			self.view.run_command("lint_window", { "messages" : messages})
 class lintWindowCommand(sublime_plugin.TextCommand):
 	def run(self, edit, messages):
 		if len(messages) > 0:
@@ -197,7 +228,7 @@ class lintWindowCommand(sublime_plugin.TextCommand):
 				if len(self.view.window().views_in_group(1)) == 1:
 					lint_view = self.view.window().active_view_in_group(1)
 					lint_view.set_read_only(False)
-					lint_view.erase(edit, sublime.Region(0, self.view.size()))
+					lint_view.erase(edit, sublime.Region(0, lint_view.size()))
 				else:
 					lint_view = self.view.window().new_file()
 					self.view.window().set_view_index(lint_view, 1, 0)
@@ -221,9 +252,32 @@ class lintWindowCommand(sublime_plugin.TextCommand):
 			    		[0, 0, 1, 1]
 			    		]
 			})
-
-
-
+class orionTooltipCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		if self.view.file_name() == None: return
+		selection = self.view.sel()[0] #Assume single selection
+		for index, loc in enumerate(messageLocs):
+			a = loc.a
+			b = loc.b
+			if a == selection.a and b == selection.b or a == selection.b and b == selection.a:
+				def close_tooltip(x):
+					if x == 0:
+						messageStatus[index] = False
+					elif x == 1:
+						if a == selection.a:
+							self.view.run_command("execute_fixes", { "index" : index, "errStart" : selection.a, "errEnd" : selection.b})
+						else:
+							self.view.run_command("execute_fixes", { "index" : index, "errStart" : selection.b, "errEnd" : selection.a})
+				if messageStatus[index] == True:
+					if quickFixes[index] == None:
+						self.view.show_popup_menu([messages[index] + "                    Click to close"], close_tooltip)
+					else:
+						self.view.show_popup_menu([messages[index] + "                    Click to close", "Quick Fix"], close_tooltip)
+				break
+class executeFixes(sublime_plugin.TextCommand):
+	def run(self, edit, index, errStart, errEnd):
+		quickFixes[index](self.view, edit, errStart, errEnd)
+		self.view.run_command("orion_lint")
 
 
 
