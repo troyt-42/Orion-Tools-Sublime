@@ -94,7 +94,6 @@ class quickFixesLib():
 	    	}
 	    }
 	    
-
 		data = None
 		try:
 			data = orionInstance.send_request(doc, "/radixFix")
@@ -103,8 +102,7 @@ class quickFixesLib():
 			return None
 		except:
 			pass
-		print(data)
-		view.insert(edit, data["start"]-1, data["text"])
+		view.insert(edit, data["start"], data["text"])
 	@staticmethod
 	def semiFix(view, edit, errStart, errEnd):
 		print(errStart)
@@ -117,9 +115,11 @@ messageLocs = []
 messageStatus = []
 globalVariables = []
 quickFixes = []
+
 class orionListeners(sublime_plugin.EventListener):
+	def __init__(self):
+		self.lastSel = None
 	def on_post_save(self, view):
-		print("dfa")
 		view.run_command("orion_lint")
 	def on_close(self, view):
 		if len(sublime.active_window().views_in_group(1)) == 0:
@@ -131,7 +131,10 @@ class orionListeners(sublime_plugin.EventListener):
 			    		]
 			})
 	def on_selection_modified(self, view):
-		view.run_command("orion_tooltip")
+		if(view.sel()[0].a != view.sel()[0].b):
+			if view.sel()[0] != self.lastSel:
+				self.lastSel = view.sel()[0]
+				view.run_command("orion_tooltip")
 class orionLintCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		if os.path.isfile('orion_global_variables.txt'):
@@ -143,15 +146,15 @@ class orionLintCommand(sublime_plugin.TextCommand):
 		else:
 			globalVariableFile = open(pluginDir+'/orion_global_variables.txt', 'a');
 			globalVariableFile.close()
-		def select_error_helper(x):
-			if x >= 0:
-				self.view.sel().clear() 
-				self.view.sel().add(messageLocs[x])
-				# self.view.show_at_center(messageLocs[x])
-				self.view.run_command("orion_tooltip")
-			else:
-				pass
 		if self.view.file_name()[len(self.view.file_name()) -3:] == ".js":
+			def select_error_helper(x):
+				if x >= 0:
+					self.view.sel().clear() 
+					self.view.sel().add(messageLocs[x])
+					self.view.show_at_center(messageLocs[x])
+					sublime.set_timeout(lambda : self.view.run_command("orion_tooltip"), 300)	
+				else:
+					pass
 			orionInstance.start_server()
 			allRegion = sublime.Region(0, self.view.size())
 			allText = self.view.substr(allRegion)

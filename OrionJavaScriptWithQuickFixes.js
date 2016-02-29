@@ -40866,10 +40866,9 @@ return /******/ (function(modules) { // webpackBootstrap
 			vm.fixes = {
 				"radix": function(data) {
 					text = data["text"];
-					annotation = data["annotation"];					
+					currentAnnotation = data["annotation"];					
 					astManager = vm.astManager;
-					ast = astManager.parse("var num = parseInt('071');", 'unknown');
-					currentAnnotation = {start: 10, end: 18, title: "Missing radix parameter.", id: "radix", data: undefined};
+					ast = astManager.parse(text, 'unknown');
 					var node = Finder.findNode(currentAnnotation.start, ast, {parents:true});
 					if(node && node.type === 'Identifier') {
 						node = node.parents[node.parents.length-1];
