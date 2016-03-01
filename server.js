@@ -10,7 +10,10 @@ app.use(bodyParser.json());
 //The ouput of bodyParser.urlencoded is wrong and cannot be parsed as a JSON object
 //Current make-up for this is using the verify function to intercept the buf and parse it 
 //to the global variable data.
-app.use(bodyParser.urlencoded({extended:false, verify: function(req, res, buf, encoding){ 
+app.use(bodyParser.urlencoded({extended:false, /**
+ * @callback
+ */
+verify: function(req, res, buf, encoding){ 
 	var body = buf.toString(encoding);
 	req.body = body;
 	var bodyObj = JSON.parse(body);
@@ -83,7 +86,7 @@ var defaults = {
 	"valid-typeof" : 2
 };
 
-app.post("/", function(req, res){
+app.post("/", /* @callback */ function(req, res){
 	var files = data.files;
 	var response = null;
 	for (var i = files.length - 1; i >= 0; i--) {
@@ -103,7 +106,7 @@ app.post("/", function(req, res){
 	res.send(JSON.stringify(response));
 });
 
-app.post("/quickFixes", function(req, res){
+app.post("/quickFixes", /* @callback */ function(req, res){
 	var id = data.id;
 	res.send(JSON.stringify(orionJS.quickFixes.retrieveFix(id)(data)));
 });

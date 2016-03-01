@@ -40915,6 +40915,132 @@ return /******/ (function(modules) { // webpackBootstrap
                         return {"point" : point, "text" : fix};
 	            	}
 	            	return name;
+				},
+				/** 
+		         * fix for the no-unused-params linting rule 
+		         * @callback
+		         */
+		        "no-unused-params": function(data) {
+		        	text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+	                var node = Finder.findNode(annotation.start, ast, {parents:true});
+	                if(node) {
+	                    var fixes = [];
+	                    var parent = node.parents.pop();
+	                    var paramindex = -1;
+	                    for(var i = 0; i < parent.params.length; i++) {
+	                        var p = parent.params[i];
+	                        if(node.range[0] === p.range[0] && node.range[1] === p.range[1]) {
+	                            paramindex = i;
+	                            break;
+	                        }
+	                    }
+	                    var fix = removeIndexedItem(parent.params, paramindex);
+	                    if(fix) {
+	                        fixes.push(fix);
+	                    }
+	                    switch(parent.type) {
+	                        case 'FunctionExpression': {
+	                            var funcparent = node.parents.pop();
+	                            if(funcparent.type === 'CallExpression' && (funcparent.callee.name === 'define' || funcparent.callee.name === 'require')) {
+	                                var args = funcparent.arguments;
+	                                for(i = 0; i < args.length; i++) {
+	                                    var arg = args[i];
+	                                    if(arg.type === 'ArrayExpression') {
+	                                        fix = removeIndexedItem(arg.elements, paramindex);
+	                                        if(fix) {
+	                                            fixes.push(fix);
+	                                        }
+	                                        break;
+	                                    }
+	                                }
+	                            } else if(funcparent.type === 'Property' && funcparent.key.leadingComments && funcparent.key.leadingComments.length > 0) {
+	                                fix = updateDoc(funcparent.key, ast.source, parent.params[paramindex].name);
+	                                if(fix) {
+	                                    fixes.push(fix);
+	                                }
+	                            }
+	                            break;
+	                        }
+	                        case 'FunctionDeclaration': {
+	                           fix = updateDoc(parent, ast.source, parent.params[paramindex].name);
+	                           if(fix) {
+	                               fixes.push(fix);
+	                           }
+	                           break;
+	                        }
+	                    }
+	                    return fixes;
+	                }
+	                return null;
+		        },
+		        /** 
+		         * alternate id for the no-unsed-params linting fix 
+		         * @callback
+		         */
+		        "no-unused-params-expr": function(data) {
+		        	text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+		        	function updateCallback(node, ast, comments) {
+		                if(Array.isArray(comments)) {
+		                    //attach it to the last one
+		                    var comment = comments[comments.length-1];
+		                    if(comment.type === 'Block') {
+		                        var valueend = comment.range[0]+comment.value.length+getDocOffset(ast.source, comment.range[0]);
+		                        var start = getLineStart(ast.source, valueend);
+		                        var indent = computeIndent(ast.source, start);
+		                        var fix = "* @callback\n"+indent; //$NON-NLS-1$
+		                        /*if(comment.value.charAt(valueend) !== '\n') {
+		                            fix = '\n' + fix;
+		                        }*/
+		                        return {"text" : fix, "start" : valueend-1, "end" : valueend-1};
+		                    }
+		                }
+		                start = getLineStart(ast.source, node.range[0]);
+		                indent = computeIndent(ast.source, start);
+		                return { "text": "/**\n"+indent+" * @callback\n"+indent+" */\n"+indent, "start" : node.range[0], "end" : node.range[0]}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		        	}
+	                var node = Finder.findNode(annotation.start, ast, {parents:true});
+	                if(node && node.parents && node.parents.length > 0) {
+	                    var func = node.parents.pop();
+	                    var p = node.parents.pop();
+	                    var fix;
+	                    switch(p.type) {
+	                    	case 'Property': {
+	                    		if(!hasDocTag(['@callback', '@public'], p) && !hasDocTag(['@callback', '@public'], p.key)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+	                    			fix = updateCallback(p, ast, p.leadingComments ? p.leadingComments : p.key.leadingComments);
+	                			}
+	                    		break;
+	                    	}
+	                    	case 'AssignmentExpression': {
+	                    		var left = p.left;
+	                    		if(left.type === 'MemberExpression' && !hasDocTag(['@callback', '@public'], left)) { //$NON-NLS-1$ //$NON-NLS-2$
+					        		fix = updateCallback(left, ast, left.leadingComments);
+					        	} else if(left.type === 'Identifier' && !hasDocTag(['@callback', '@public'], left)) { //$NON-NLS-1$ //$NON-NLS-2$
+					        		fix = updateCallback(p.left, ast, left.leadingComments);	        		
+					        	}
+	                			break;
+	                    	}
+	                    	case 'VariableDeclarator': {
+	                    		var oldp = p;
+	                			p = node.parents.pop();
+	                			if(p.declarations[0].range[0] === oldp.range[0] && p.declarations[0].range[1] === oldp.range[1]) {
+	                				//insert at the var keyword level to not mess up the code
+	                				fix = updateCallback(p, ast, oldp.id.leadingComments);
+	                			} else if(!hasDocTag(['@callback', '@public'], oldp.id)) { //$NON-NLS-1$ //$NON-NLS-2$
+	                    			fix = updateCallback(oldp, ast, oldp.id.leadingComments);
+	                			} 
+	                			
+	                    		break;
+	                    	}
+	                    }
+	                    if(!fix && !hasDocTag(['@callback', '@public'], func)) { //$NON-NLS-1$ //$NON-NLS-2$
+	                        return {"text" : "/* @callback */ ", "start": func.range[0], "end" : func.range[0]}; //$NON-NLS-1$
+	                    }
+	                }
+	                return fix;
 				}
 			}
 		}
@@ -41053,29 +41179,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return -1;
 		}
 		
-		function removeIndexedItem(list, index, editorContext) {
+		function removeIndexedItem(list, index) {
 	        if(index < 0 || index > list.length) {
 	            return;
 	        }
 	        var node = list[index];
 	        if(list.length === 1) {
-	            return editorContext.setText('', node.range[0], node.range[1]);
+	            return { "start" : node.range[0], "end" : node.range[1] };
 	        } else if(index === list.length-1) {
-	            return editorContext.setText('', list[index-1].range[1], node.range[1]);
+	            return { "start" : list[index-1].range[1], "end" : node.range[1]};
 	        } else if(node) {
-	            return editorContext.setText('', node.range[0], list[index+1].range[0]);
+	            return { "start" : node.range[0], "end" : list[index+1].range[0]};
 	        }
 	        return null;
 	    }
 	    
-	    function updateDoc(node, source, editorContext, name) {
+	    function updateDoc(node, source, name) {
 	        if(node.leadingComments && node.leadingComments.length > 0) {
 	            for(var i = node.leadingComments.length-1; i > -1; i--) {
 	                var comment = node.leadingComments[i];
 	                var edit = new RegExp("(\\s*[*]+\\s*(?:@param)\\s*(?:\\{.*\\})?\\s*(?:"+name+")+.*)").exec(comment.value); //$NON-NLS-1$ //$NON-NLS-2$
 	                if(edit) {
 	                    var start = comment.range[0] + edit.index + getDocOffset(source, comment.range[0]);
-	                    return editorContext.setText('', start, start+edit[1].length);
+	                    return {"start" : start, "end" :start+edit[1].length};
 	                }
 	            }
 	        }

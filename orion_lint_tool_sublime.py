@@ -74,10 +74,30 @@ class Req_Error(Exception):
 class quickFixesLib():
 	def __init__(self):
 		self.defaultFixes = {
-			"curly" : self.curlyFix,
-			"no-undef" : self.noUndefFix,
-			"radix" : self.radixFix,
-			"semi" : self.semiFix
+			"curly" : [{
+				"des" : "Enclose statements in braces",
+				"fix" : self.curlyFix
+			}],
+			"no-undef" : [{
+				"des" : "Add to Global Directive",
+				"fix" : self.noUndefFix
+			}],
+			"no-unused-params" : [{
+				"des" : "Remove parameter",
+				"fix" : self.noUnusedParamsFix1
+			}, {
+				"des" : "Add @callback to function",
+				"fix" : self.noUnusedParamsFix2,
+				"special" : "no-unused-params-expr"
+			}],
+			"radix" : [{
+				"des" : "Add default radix",
+				"fix" : self.radixFix
+			}],
+			"semi" : [{
+				"des" : "Add missing ';'",
+				"fix" : self.semiFix
+			}]
 		}
 	@staticmethod
 	def curlyFix(view, edit,index, errStart, errEnd):
@@ -108,6 +128,50 @@ class quickFixesLib():
 		if data is not None:
 			view.insert(edit, data["point"], data["text"])
 	@staticmethod
+	def noUnusedParamsFix1(view, edit, index, errStart, errEnd):
+		allRegion = sublime.Region(0, view.size())
+		allText = view.substr(allRegion)
+		doc = {
+			"text" : allText,
+			"annotation" : {
+				"start" : errStart,
+				"end" : errEnd
+			},
+			"id" : "no-unused-params"
+		}
+		data = None
+		try:
+			data = orionInstance.send_request(doc, "/quickFixes")
+		except Req_Error as e:
+			print("Error:" + e.message)
+			return None
+		except: pass
+		if data != None:
+			for fix in data:
+				region = sublime.Region(fix["start"], fix["end"])
+				view.erase(edit, region)
+	@staticmethod 
+	def noUnusedParamsFix2(view, edit, index, errStart, errEnd):
+		allRegion = sublime.Region(0, view.size())
+		allText = view.substr(allRegion)
+		doc = {
+			"text" : allText,
+			"annotation" : {
+				"start" : errStart,
+				"end" : errEnd
+			},
+			"id" : "no-unused-params-expr"
+		}
+		data = None
+		try:
+			data = orionInstance.send_request(doc, "/quickFixes")
+		except Req_Error as e:
+			print("Error:" + e.message)
+			return None
+		except: pass
+		if data != None:
+			view.insert(edit, data['start'], data['text'])
+	@staticmethod
 	def radixFix(view, edit,index, errStart, errEnd):
 		allRegion = sublime.Region(0, view.size())
 		allText = view.substr(allRegion)
@@ -128,7 +192,8 @@ class quickFixesLib():
 			return None
 		except:
 			pass
-		view.insert(edit, data["start"], data["text"])
+		if data != None:
+			view.insert(edit, data["start"], data["text"])
 	@staticmethod
 	def semiFix(view, edit,index, errStart, errEnd):
 		print(errStart)
@@ -227,6 +292,10 @@ class orionLintCommand(sublime_plugin.TextCommand):
 						warnings.append(region)
 					else:
 						errors.append(region)
+					temp = quickFixesInstance.defaultFixes.get(result.get("ruleId", "None"),None)
+					if temp != None:
+						temp[:] = [ x for x in temp if x.get("special", None) == None or result["args"]["pid"] == x.get("special")]
+
 					quickFixes.append(quickFixesInstance.defaultFixes.get(result.get("ruleId", "None"),None))
 				self.view.add_regions("orionLintWarnings", warnings, "keyword", "Packages/orion_tools_sublime/warning.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
 				self.view.add_regions("orionLintErrors", errors, "keyword", "Packages/orion_tools_sublime/error.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
@@ -292,20 +361,23 @@ class orionTooltipCommand(sublime_plugin.TextCommand):
 				def close_tooltip(x):
 					if x == 0:
 						messageStatus[index] = False
-					elif x == 1:
+					elif x >= 1:
 						if a == selection.a:
-							self.view.run_command("execute_fixes", { "index" : index, "errStart" : selection.a, "errEnd" : selection.b})
+							self.view.run_command("execute_fixes", { "kind" : index, "index" : x-1, "errStart" : selection.a, "errEnd" : selection.b})
 						else:
-							self.view.run_command("execute_fixes", { "index" : index, "errStart" : selection.b, "errEnd" : selection.a})
+							self.view.run_command("execute_fixes", { "kind" : index, "index" : x-1, "errStart" : selection.b, "errEnd" : selection.a})
 				if messageStatus[index] == True:
 					if quickFixes[index] == None:
-						self.view.show_popup_menu([messages[index] + "                    Click to close"], close_tooltip)
+						self.view.show_popup_menu([messages[index] + "                    Click to ignore"], close_tooltip)
 					else:
-						self.view.show_popup_menu([messages[index] + "                    Click to close", "Quick Fix"], close_tooltip)
+						temp = [messages[index] + "                    Click to close"]
+						for i in range(len(quickFixes[index])):
+							temp.append("Quick Fix: " + quickFixes[index][i]["des"])
+						self.view.show_popup_menu(temp, close_tooltip)
 				break
 class executeFixes(sublime_plugin.TextCommand):
-	def run(self, edit, index, errStart, errEnd):
-		quickFixes[index](self.view, edit, index, errStart, errEnd)
+	def run(self, edit, kind, index, errStart, errEnd):
+		quickFixes[kind][index]["fix"](self.view, edit, kind, errStart, errEnd)
 		self.view.run_command("orion_lint")
 
 
