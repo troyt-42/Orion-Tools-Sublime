@@ -40949,6 +40949,23 @@ return /******/ (function(modules) { // webpackBootstrap
 		            }
 		            return null;
 		        },
+		        "no-undef-init": function(data) {
+		        	text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+					var node = Finder.findNode(annotation.start, ast, {parents:true});
+					if(node) {
+						var p = node.parents[node.parents.length-1];
+						if(p.type === 'VariableDeclarator') {
+							return {
+								text: '',
+								start: p.id.range[1],
+								end: p.range[1]
+							};									
+						}
+					}
+				},
 				/** 
 		         * fix for the no-unused-params linting rule 
 		         * @callback

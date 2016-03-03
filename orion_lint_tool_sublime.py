@@ -93,6 +93,10 @@ class quickFixesLib():
 				"fix" : self.noUndefDefinedInenvFix,
 				"pid" : "no-undef-defined-inenv"
 			}],
+			"no-undef-init" : [{
+				"des" : "Remove assignment",
+				"fix" : self.noUndefInitFix
+			}],
 			"no-unreachable" : [{
 				"des" : "Remove unreachable code",
 				"fix" : self.noUnreachableFix
@@ -187,6 +191,14 @@ class quickFixesLib():
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data is not None:
 			view.insert(edit, data["point"], data["text"])
+	def noUndefInitFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = { 
+			"id" : "no-undef-init", 
+			"annotation" : {"title" : messages[index]}
+			}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data is not None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]));
 	def noUnreachableFix(self, view, edit,index, errStart, errEnd):
 		view.erase(edit, sublime.Region(view.full_line(errStart).a, view.full_line(errEnd).b))
 	def noUnusedParamsFix(self, view, edit, index, errStart, errEnd):
