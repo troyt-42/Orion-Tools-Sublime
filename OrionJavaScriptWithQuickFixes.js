@@ -41142,6 +41142,54 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                return null;
 		        },
+		        /** fix for the unnecessary-nls rule */
+		        "unnecessary-nls": function(data){
+		        	text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+		       		
+		        	
+	        		var comment = Finder.findComment(annotation.start + 2, ast); // Adjust for leading //
+	        		var nlsTag = annotation.data.nlsComment; // We store the nls tag in the annotation
+	        		if (comment && comment.type.toLowerCase() === 'line' && nlsTag){
+						var index = comment.value.indexOf(nlsTag);
+						// Check if we can delete the whole comment
+						if (index > 0){
+							var start = annotation.start;
+							while (ast.source.charAt(start-1) === ' ' || ast.source.charAt(start-1) === '\t'){
+								start--;
+							}
+							return {
+								text: '',
+								start: start,
+								end: annotation.end
+							};
+						} else if (index === 0){
+							var newComment = comment.value.substring(index+nlsTag.length);
+							start = annotation.start;
+							var end = annotation.end;
+							if (!newComment.match(/^(\s*|\s*\/\/.*)$/)){
+								start += 2; // Only remove leading // if additional comments start with another //
+							} else {
+								while (ast.source.charAt(start-1) === ' ' || ast.source.charAt(start-1) === '\t'){
+									start--;
+								}
+							}
+							if (newComment.match(/^\s*$/)){
+								end = comment.range[1]; // If there is only whitespace left in the comment, delete it entirely
+								while (ast.source.charAt(start-1) === ' ' || ast.source.charAt(start-1) === '\t'){
+									start--;
+								}
+							}
+							return {
+								text: '',
+								start: start,
+								end: end
+							};
+						}
+					}
+	        		return null;
+	    		}
 			}
 		}
 		

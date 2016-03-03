@@ -70,7 +70,14 @@ class Req_Error(Exception):
   def __str__(self):
     return self.message
 
-
+orionInstance = orionInstance()
+quickFixesInstance = quickFixesLib()
+metaMessages = []
+messages = []
+messageLocs = []
+messageStatus = []
+globalVariables = []
+quickFixes = []
 class quickFixesLib():
 	def __init__(self):
 		self.defaultFixes = {
@@ -87,20 +94,20 @@ class quickFixesLib():
 				"fix" : self.noUnusedParamsFix
 			}, {
 				"des" : "Add @callback to function",
-				"fix" : self.noUnusedParamsFixExpr,
+				"fix" : self.noUnusedParamsExprFix,
 				"pid" : "no-unused-params-expr"
 			}],
 			"no-unused-vars" : [{
 				"des" : "Remove the unused variable",
-				"fix" : self.noUnusedVarsUnused,
+				"fix" : self.noUnusedVarsUnusedFix,
 				"pid" : "no-unused-vars-unused"
 			},{
 				"des" : "Remove the unread variable",
-				"fix" : self.noUnusedVarsUnread,
+				"fix" : self.noUnusedVarsUnreadFix,
 				"pid" : "no-unused-vars-unread"
 			},{
 				"des" : "Remove the unused function",
-				"fix" : self.noUnusedVarsFuncdecl,
+				"fix" : self.noUnusedVarsFuncdeclFix,
 				"pid" : "no-unused-vars-unused-funcdecl"
 			}],
 			"radix" : [{
@@ -114,6 +121,10 @@ class quickFixesLib():
 			"use-isnan" : [{
 				"des" : "Use isNaN()",
 				"fix" : self.useIsnanFix
+			}],
+			"unnecessary-nls" : [{
+				"des" : "Remove Unnecessary $NON-NLS$ tag",
+				"fix" : self.unnecessaryNlsFix
 			}]
 		}
 	@staticmethod
@@ -121,6 +132,8 @@ class quickFixesLib():
 		def update(a, b):
 			for k, v in b.items():
 				if type(v) != dict:
+					a[k] = v
+				elif a.get(k) == None:
 					a[k] = v
 				else:
 					a[k] = update(a[k], b[k])
@@ -169,28 +182,28 @@ class quickFixesLib():
 				region = sublime.Region(fix["start"], fix["end"])
 				view.erase(edit, region) 
 		# print({"text" : view.substr(sublime.Region(0, view.size()))})
-	def noUnusedParamsFixExpr(self, view, edit, index, errStart, errEnd):
+	def noUnusedParamsExprFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "no-unused-params-expr"
 		}
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			view.insert(edit, data['start'], data['text'])
-	def noUnusedVarsUnused(self, view, edit, index, errStart, errEnd):
+	def noUnusedVarsUnusedFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			'id' : "no-unused-vars-unused"
 		}
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			view.erase(edit, sublime.Region(data["start"], data["end"]))
-	def noUnusedVarsUnread(self, view, edit, index, errStart, errEnd):
+	def noUnusedVarsUnreadFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			'id' : "no-unused-vars-unread"
 		}
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			view.erase(edit, sublime.Region(data["start"], data["end"]))
-	def noUnusedVarsFuncdecl(self, view, edit, index, errStart, errEnd):
+	def noUnusedVarsFuncdeclFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			'id' : "no-unused-vars-unused-funcdecl"
 		}
@@ -214,13 +227,16 @@ class quickFixesLib():
 		if data != None:
 			view.erase(edit, sublime.Region(data["start"], data["end"]))
 			view.insert(edit, data["start"], data["text"])
-orionInstance = orionInstance()
-quickFixesInstance = quickFixesLib()
-messages = []
-messageLocs = []
-messageStatus = []
-globalVariables = []
-quickFixes = []
+	def unnecessaryNlsFix(self, view, edit, index, errStart, errEnd):
+		global metaMessages
+		docKeysToChange = {
+			"id" : "unnecessary-nls",
+			"annotation" : { "data" : metaMessages[index]["args"]["data"]}
+		}
+		
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
 
 class orionListeners(sublime_plugin.EventListener):
 	def __init__(self):
@@ -289,6 +305,8 @@ class orionLintCommand(sublime_plugin.TextCommand):
 			del messageStatus[:]
 			del quickFixes[:]
 			if data != None:
+				global metaMessages 
+				metaMessages = data
 				for result in data:
 					# print(result)
 					undefError = result.get("ruleId", None) == "no-undef"
@@ -301,7 +319,8 @@ class orionLintCommand(sublime_plugin.TextCommand):
 						region = sublime.Region(result["related"]["range"][0],  result["related"]["range"][1])
 					else:
 						region = sublime.Region(result["node"]["range"][0],  result["node"]["range"][1])
-					messages.append(str(result["line"])+":"+str(result["column"])+" "+ result["message"]+"\n")
+
+					messages.append(str(self.view.rowcol(region.a)[0]+1)+":"+str(self.view.rowcol(region.a)[1]+1)+" "+ result["message"]+"\n")
 					messageLocs.append(region)
 					messageStatus.append(True)
 					if result.get("severity", 0) <= 1:

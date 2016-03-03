@@ -81,7 +81,7 @@ var defaults = {
 	"radix" : 1,
 	"semi" : 1,
 	"type-checked-consistent-return" : 0,
-	"unnecessary-nls" : 0,
+	"unnecessary-nls" : 1,
 	"use-isnan" : 2,
 	"valid-typeof" : 2
 };
