@@ -89,6 +89,10 @@ class quickFixesLib():
 				"des" : "Add to Global Directive",
 				"fix" : self.noUndefFix
 			}],
+			"no-unreachable" : [{
+				"des" : "Remove unreachable code",
+				"fix" : self.noUnreachableFix
+			}],
 			"no-unused-params" : [{
 				"des" : "Remove parameter",
 				"fix" : self.noUnusedParamsFix
@@ -171,6 +175,8 @@ class quickFixesLib():
 		print(data["point"])
 		if data is not None:
 			view.insert(edit, data["point"], data["text"])
+	def noUnreachableFix(self, view, edit,index, errStart, errEnd):
+		view.erase(edit, sublime.Region(view.full_line(errStart).a, view.full_line(errEnd).b))
 	def noUnusedParamsFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "no-unused-params"
