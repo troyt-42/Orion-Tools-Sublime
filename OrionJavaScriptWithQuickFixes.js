@@ -40906,7 +40906,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    comment = Finder.findDirective(ast, 'globals'); //$NON-NLS-1$
 	                    if(comment) {
 	                        start = comment.range[0]+2;
-	                        return {"point" : start+comment.value.length, "text" : insert}; //$NON-NLS-1$
+	                        return {"point" : start+comment.value.length, "text" : insert+" ", }; //$NON-NLS-1$
 	                    }
                         var point = getDirectiveInsertionPoint(ast);
                     	var linestart = getLineStart(ast.source, point);
@@ -41072,7 +41072,76 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    	}
 	                    }
 	                }
-		        }
+		        },
+		        /**
+		         * @callback
+		         */
+		        "no-unused-vars-unused": function(data) {
+		        	text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+		       		
+	                var node = Finder.findNode(annotation.start, ast, {parents:true});
+	                if(node && node.parents && node.parents.length > 0) {
+	                    var declr = node.parents.pop();
+	                    if(declr.type === 'VariableDeclarator') {
+	                        var decl = node.parents.pop();
+	                        if(decl.type === 'VariableDeclaration') {
+	                            if(decl.declarations.length === 1) {
+	                                return {"start" : decl.range[0], "end" : decl.range[1]};
+	                            }
+                                var idx = indexOf(decl.declarations, declr);
+                                if(idx > -1) {
+                                    return removeIndexedItem(decl.declarations, idx, editorContext);
+                                }
+	                        }
+	                    }
+	                }
+	                return null;
+		        },
+		        /**
+		         * @callback
+		         */
+		        "no-unused-vars-unread": function(data) {
+		        	text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+		       		
+	                var node = Finder.findNode(annotation.start, ast, {parents:true});
+	                if(node && node.parents && node.parents.length > 0) {
+	                    var declr = node.parents.pop();
+	                    if(declr.type === 'VariableDeclarator') {
+	                        var decl = node.parents.pop();
+	                        if(decl.type === 'VariableDeclaration') {
+	                            if(decl.declarations.length === 1) {
+	                                return {"start" : decl.range[0], "end" : decl.range[1]};
+	                            }
+                                var idx = indexOf(decl.declarations, declr);
+                                if(idx > -1) {
+                                    return removeIndexedItem(decl.declarations, idx, editorContext);
+                                }
+	                        }
+	                    }
+	                }
+	                return null;
+		        },
+		        /**
+		         * @callback
+		         */
+		        "no-unused-vars-unused-funcdecl": function(data) {
+		        	text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+		       		
+	                var node = Finder.findNode(annotation.start, ast, {parents:true});
+	                if(node && node.parents && node.parents.length > 0) {
+	                    var decl = node.parents.pop();
+	                    if(decl.type === 'FunctionDeclaration') {
+	                        return { "start" : decl.range[0], "end" : decl.range[1]};
+	                    }
+	                }
+	                return null;
+		        },
 			}
 		}
 		

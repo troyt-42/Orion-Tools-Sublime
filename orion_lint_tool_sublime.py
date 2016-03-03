@@ -84,11 +84,24 @@ class quickFixesLib():
 			}],
 			"no-unused-params" : [{
 				"des" : "Remove parameter",
-				"fix" : self.noUnusedParamsFix1
+				"fix" : self.noUnusedParamsFix
 			}, {
 				"des" : "Add @callback to function",
-				"fix" : self.noUnusedParamsFix2,
-				"special" : "no-unused-params-expr"
+				"fix" : self.noUnusedParamsFixExpr,
+				"pid" : "no-unused-params-expr"
+			}],
+			"no-unused-vars" : [{
+				"des" : "Remove the unused variable",
+				"fix" : self.noUnusedVarsUnused,
+				"pid" : "no-unused-vars-unused"
+			},{
+				"des" : "Remove the unread variable",
+				"fix" : self.noUnusedVarsUnread,
+				"pid" : "no-unused-vars-unread"
+			},{
+				"des" : "Remove the unused function",
+				"fix" : self.noUnusedVarsFuncdecl,
+				"pid" : "no-unused-vars-unused-funcdecl"
 			}],
 			"radix" : [{
 				"des" : "Add default radix",
@@ -142,26 +155,48 @@ class quickFixesLib():
 			"annotation" : {"title" : messages[index]}
 			}
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		print(data["point"])
 		if data is not None:
 			view.insert(edit, data["point"], data["text"])
-	def noUnusedParamsFix1(self, view, edit, index, errStart, errEnd):
+	def noUnusedParamsFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "no-unused-params"
 		}
-		print({"text" : view.substr(sublime.Region(0, view.size()))})
+		# print({"text" : view.substr(sublime.Region(0, view.size()))})
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			for fix in data:
 				region = sublime.Region(fix["start"], fix["end"])
 				view.erase(edit, region) 
-		print({"text" : view.substr(sublime.Region(0, view.size()))})
-	def noUnusedParamsFix2(self, view, edit, index, errStart, errEnd):
+		# print({"text" : view.substr(sublime.Region(0, view.size()))})
+	def noUnusedParamsFixExpr(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "no-unused-params-expr"
 		}
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			view.insert(edit, data['start'], data['text'])
+	def noUnusedVarsUnused(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			'id' : "no-unused-vars-unused"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
+	def noUnusedVarsUnread(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			'id' : "no-unused-vars-unread"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
+	def noUnusedVarsFuncdecl(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			'id' : "no-unused-vars-unused-funcdecl"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
 	def radixFix(self, view, edit,index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "radix"
@@ -255,6 +290,7 @@ class orionLintCommand(sublime_plugin.TextCommand):
 			del quickFixes[:]
 			if data != None:
 				for result in data:
+					# print(result)
 					undefError = result.get("ruleId", None) == "no-undef"
 					if undefError:
 						temp = result["message"].split('\'')[1]
@@ -272,11 +308,12 @@ class orionLintCommand(sublime_plugin.TextCommand):
 						warnings.append(region)
 					else:
 						errors.append(region)
-					temp = quickFixesInstance.defaultFixes.get(result.get("ruleId", "None"),None)
-					if temp != None:
-						temp[:] = [ x for x in temp if x.get("special", None) == None or result["args"]["pid"] == x.get("special")]
-
-					quickFixes.append(quickFixesInstance.defaultFixes.get(result.get("ruleId", "None"),None))
+					tempFix = None
+					if quickFixesInstance.defaultFixes.get(result.get("ruleId", "None"),None) != None:
+						tempFix = quickFixesInstance.defaultFixes.get(result.get("ruleId", "None"),None).copy()
+					if tempFix != None:
+						tempFix[:] = [ x for x in tempFix if x.get("pid", None) == None or result["args"].get("pid", None) == x.get("pid") or result["args"].get("nls", None) == x.get("pid")]
+					quickFixes.append(tempFix)
 				self.view.add_regions("orionLintWarnings", warnings, "keyword", "Packages/orion_tools_sublime/warning.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
 				self.view.add_regions("orionLintErrors", errors, "keyword", "Packages/orion_tools_sublime/error.png", sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE | sublime.DRAW_SOLID_UNDERLINE)
 				self.view.window().show_quick_panel(messages, select_error_helper)
