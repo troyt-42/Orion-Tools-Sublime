@@ -1,3 +1,4 @@
+/*eslint-env node */
 var scriptResolver = require("./scriptResolver.js");
 var orionJSLib = require("./OrionJavaScriptWithQuickFixes.js");
 var orionJS = new orionJSLib(new scriptResolver(), false);

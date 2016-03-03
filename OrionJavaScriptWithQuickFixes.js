@@ -40915,7 +40915,40 @@ return /******/ (function(modules) { // webpackBootstrap
                         return {"point" : point, "text" : fix};
 	            	}
 	            	return name;
-				},
+				},/** 
+		         * alternate id for no-undef-defined linting fix
+		         * @callback
+		         */
+		        "no-undef-defined-inenv": function(data) {
+		        	text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+		            var name = /'(.*)'/.exec(annotation.title);
+
+		            if(name !== null && typeof name !== 'undefined') {
+	                    var comment = null;
+	                    var start = 0;
+	                    if(name[1] === 'console') {
+	                        var env = 'node'; //$NON-NLS-1$
+	                    } else {
+	                        env = Finder.findESLintEnvForMember(name[1]);
+	                    }
+	                    if(env) {
+	                        comment = Finder.findDirective(ast, 'eslint-env'); //$NON-NLS-1$
+	                        if(comment) {
+	                            start = getDocOffset(ast.source, comment.range[0]) + comment.range[0];
+	    	                    return editorContext.setText(updateDirective(comment.value, 'eslint-env', env, true), start, start+comment.value.length); //$NON-NLS-1$
+	                        }
+                            var point = getDirectiveInsertionPoint(ast);
+                    		var linestart = getLineStart(ast.source, point);
+                    		var indent = computeIndent(ast.source, linestart, false);
+               				var fix = '/*eslint-env '+env+' */\n' + indent; //$NON-NLS-1$ //$NON-NLS-2$
+                            return {"text" : fix, "point" : point};
+	                    }
+		            }
+		            return null;
+		        },
 				/** 
 		         * fix for the no-unused-params linting rule 
 		         * @callback

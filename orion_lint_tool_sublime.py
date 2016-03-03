@@ -88,6 +88,10 @@ class quickFixesLib():
 			"no-undef" : [{
 				"des" : "Add to Global Directive",
 				"fix" : self.noUndefFix
+			}, {
+				"des" : "Add eslint-env Directive",
+				"fix" : self.noUndefDefinedInenvFix,
+				"pid" : "no-undef-defined-inenv"
 			}],
 			"no-unreachable" : [{
 				"des" : "Remove unreachable code",
@@ -155,6 +159,7 @@ class quickFixesLib():
 	    	"id":None
 	    }
 		doc = update(docTemplate, docKeysToChange)
+		# print(doc)
 		try:
 			data = orionInstance.send_request(doc, "/quickFixes")
 		except Req_Error as e:
@@ -172,7 +177,14 @@ class quickFixesLib():
 			"annotation" : {"title" : messages[index]}
 			}
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		print(data["point"])
+		if data is not None:
+			view.insert(edit, data["point"], data["text"])
+	def noUndefDefinedInenvFix(self, view, edit,index, errStart, errEnd):
+		docKeysToChange = { 
+			"id" : "no-undef-defined-inenv", 
+			"annotation" : {"title" : messages[index]}
+			}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data is not None:
 			view.insert(edit, data["point"], data["text"])
 	def noUnreachableFix(self, view, edit,index, errStart, errEnd):
