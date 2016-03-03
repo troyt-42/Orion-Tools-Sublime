@@ -97,94 +97,34 @@ class quickFixesLib():
 			"semi" : [{
 				"des" : "Add missing ';'",
 				"fix" : self.semiFix
+			}],
+			"use-isnan" : [{
+				"des" : "Use isNaN()",
+				"fix" : self.useIsnanFix
 			}]
 		}
 	@staticmethod
-	def curlyFix(view, edit,index, errStart, errEnd):
-		view.insert(edit, errStart, "{  ")
-		view.insert(edit, errEnd+3, "  }")
-	@staticmethod
-	def noUndefFix(view, edit,index, errStart, errEnd):
+	def fixHelper(view, edit, index, errStart, errEnd, docKeysToChange):
+		def update(a, b):
+			for k, v in b.items():
+				if type(v) != dict:
+					a[k] = v
+				else:
+					a[k] = update(a[k], b[k])
+			return a
 		allRegion = sublime.Region(0, view.size())
 		allText = view.substr(allRegion)
+		data = None
 
-		doc = {
-	    	"text" : allText,
-	    	"annotation" : {
-	    		"start" : errStart,
-	    		"end" : errEnd,
-	    		"title" : messages[index]
-	    	},
-	    	"id":"no-undef"
-	    }
-		data = None
-		try:
-			data = orionInstance.send_request(doc, "/quickFixes")
-		except Req_Error as e:
-			print("Error:" + e.message)
-			return None
-		except:
-			pass
-		if data is not None:
-			view.insert(edit, data["point"], data["text"])
-	@staticmethod
-	def noUnusedParamsFix1(view, edit, index, errStart, errEnd):
-		allRegion = sublime.Region(0, view.size())
-		allText = view.substr(allRegion)
-		doc = {
-			"text" : allText,
-			"annotation" : {
-				"start" : errStart,
-				"end" : errEnd
-			},
-			"id" : "no-unused-params"
-		}
-		data = None
-		try:
-			data = orionInstance.send_request(doc, "/quickFixes")
-		except Req_Error as e:
-			print("Error:" + e.message)
-			return None
-		except: pass
-		if data != None:
-			for fix in data:
-				region = sublime.Region(fix["start"], fix["end"])
-				view.erase(edit, region)
-	@staticmethod 
-	def noUnusedParamsFix2(view, edit, index, errStart, errEnd):
-		allRegion = sublime.Region(0, view.size())
-		allText = view.substr(allRegion)
-		doc = {
-			"text" : allText,
-			"annotation" : {
-				"start" : errStart,
-				"end" : errEnd
-			},
-			"id" : "no-unused-params-expr"
-		}
-		data = None
-		try:
-			data = orionInstance.send_request(doc, "/quickFixes")
-		except Req_Error as e:
-			print("Error:" + e.message)
-			return None
-		except: pass
-		if data != None:
-			view.insert(edit, data['start'], data['text'])
-	@staticmethod
-	def radixFix(view, edit,index, errStart, errEnd):
-		allRegion = sublime.Region(0, view.size())
-		allText = view.substr(allRegion)
-		doc = {
+		docTemplate = {
 	    	"text" : allText,
 	    	"annotation" : {
 	    		"start" : errStart,
 	    		"end" : errEnd
 	    	},
-	    	"id":"radix"
+	    	"id":None
 	    }
-	    
-		data = None
+		doc = update(docTemplate, docKeysToChange)
 		try:
 			data = orionInstance.send_request(doc, "/quickFixes")
 		except Req_Error as e:
@@ -192,13 +132,53 @@ class quickFixesLib():
 			return None
 		except:
 			pass
+		return data
+	def curlyFix(self, view, edit,index, errStart, errEnd):
+		view.insert(edit, errStart, "{  ")
+		view.insert(edit, errEnd+3, "  }")
+	def noUndefFix(self, view, edit,index, errStart, errEnd):
+		docKeysToChange = { 
+			"id" : "no-undef", 
+			"annotation" : {"title" : messages[index]}
+			}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data is not None:
+			view.insert(edit, data["point"], data["text"])
+	def noUnusedParamsFix1(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-unused-params"
+		}
+		print({"text" : view.substr(sublime.Region(0, view.size()))})
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			for fix in data:
+				region = sublime.Region(fix["start"], fix["end"])
+				view.erase(edit, region) 
+		print({"text" : view.substr(sublime.Region(0, view.size()))})
+	def noUnusedParamsFix2(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-unused-params-expr"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.insert(edit, data['start'], data['text'])
+	def radixFix(self, view, edit,index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "radix"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			view.insert(edit, data["start"], data["text"])
-	@staticmethod
-	def semiFix(view, edit,index, errStart, errEnd):
-		print(errStart)
+	def semiFix(self, view, edit,index, errStart, errEnd):
 		view.insert(edit, errEnd, ";")
-
+	def useIsnanFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "use-isnan"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
+			view.insert(edit, data["start"], data["text"])
 orionInstance = orionInstance()
 quickFixesInstance = quickFixesLib()
 messages = []
