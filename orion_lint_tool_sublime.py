@@ -292,10 +292,8 @@ messageLocs = []
 messageStatus = []
 globalVariables = []
 quickFixes = []
-
+lastSel = None
 class orionListeners(sublime_plugin.EventListener):
-	def __init__(self):
-		self.lastSel = None
 	def on_post_save(self, view):
 		view.run_command("orion_lint")
 	def on_close(self, view):
@@ -308,9 +306,10 @@ class orionListeners(sublime_plugin.EventListener):
 			    		]
 			})
 	def on_selection_modified(self, view):
+		global lastSel
 		if(view.sel()[0].a != view.sel()[0].b):
-			if view.sel()[0] != self.lastSel:
-				self.lastSel = view.sel()[0]
+			if view.sel()[0] != lastSel:
+				lastSel = view.sel()[0]
 				view.run_command("orion_tooltip")
 class orionLintCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -467,7 +466,10 @@ class orionTooltipCommand(sublime_plugin.TextCommand):
 							for i in range(len(quickFixes[index])):
 								temp.append("Quick Fix: " + quickFixes[index][i]["des"])
 								tempIndexes.append(index)
-			self.view.show_popup_menu(temp, close_tooltip)
+			if(len(temp) != 0):
+				self.view.show_popup_menu(temp, close_tooltip)
+				global lastSel
+				lastSel = None
 class executeFixes(sublime_plugin.TextCommand):
 	def run(self, edit, kind, index, errStart, errEnd):
 		quickFixes[kind][index]["fix"](self.view, edit, kind, errStart, errEnd)
