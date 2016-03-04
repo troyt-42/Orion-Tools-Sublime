@@ -81,6 +81,14 @@ class quickFixesLib():
 				"des" : "Update operator",
 				"fix" : self.eqeqeqFix
 			}],
+			"no-debugger" : [{
+				"des" : "Remove statement",
+				"fix" : self.noDebuggerFix
+			}],
+			"no-eq-null" : [{
+				"des" : "Update operator",
+				"fix" : self.eqeqeqFix
+			}],
 			"new-parens" : [{
 				"des" : "Add parentheses",
 				"fix" : self.newParensFix
@@ -187,6 +195,13 @@ class quickFixesLib():
 		if expected != None:
 			view.erase(edit, sublime.Region(errStart, errEnd))
 			view.insert(edit, errStart, expected.group(1))
+	def noDebuggerFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-debugger"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
 	def newParensFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "new-parens"

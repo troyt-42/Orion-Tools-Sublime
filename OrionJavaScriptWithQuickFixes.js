@@ -40893,6 +40893,22 @@ return /******/ (function(modules) { // webpackBootstrap
 						return { "text" : '()', "point" : node.range[1]}; //$NON-NLS-1$
 					}
 				},
+				"no-debugger" : function(data) {
+					text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+					var end = annotation.end;
+					var tok = Finder.findToken(annotation.end, ast.tokens);
+					if(tok && tok.type === 'Punctuator' && tok.value === ';') {
+						end = tok.range[1];
+					} 
+					return {
+						text: '',
+						start: annotation.start,
+						end: end
+					};
+				},
 				"no-self-assign": function(data) {
 					text = data["text"];
 					annotation = data["annotation"];
