@@ -40916,6 +40916,13 @@ return /******/ (function(modules) { // webpackBootstrap
 						linkModel = {groups: groups};
 					return linkModel;
 				},
+				"no-dupe-keys": function(data) {
+					annotation = data["annotation"]
+					var start = annotation.start,
+						groups = [{data: {}, positions: [{offset: start, length: annotation.end-start}]}],
+						linkModel = {groups: groups};
+					return linkModel;
+				},
 				"no-self-assign": function(data) {
 					text = data["text"];
 					annotation = data["annotation"];
@@ -40957,6 +40964,122 @@ return /******/ (function(modules) { // webpackBootstrap
 							linkModel = {groups: groups};
 						return linkModel;
 					}
+				},
+				"no-new-wrappers": function(data) {
+					text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+					var node = Finder.findNode(annotation.start, ast, {parents:true});
+					if(node) {
+						var parent = node.parents[node.parents.length-1];
+						if(parent.type === 'NewExpression') {
+							var tok = Finder.findToken(parent.range[0], ast.tokens);
+							if(tok && tok.type === 'Keyword' && tok.value === 'new') {
+								var text = '';
+								var end = tok.range[1],
+									start = tok.range[0],
+									prev = ast.tokens[tok.index-1];
+								if(prev.range[1] < tok.range[0]) {
+									end = node.range[0];
+									start = prev.range[1]+1;
+								} else if(node.range[0] - end > 1) {
+									end += node.range[0] - end - 1;
+								}
+								if(parent.callee.name === 'Math' || parent.callee.name === 'JSON') {
+									//also get rid of the params - these two have no functional equivilent
+									end = parent.range[1];
+									text = parent.callee.name;
+								}
+								return { "text" : text, "start" : start, "end" : end };
+							}
+						}
+					}	
+				},
+				"no-new-wrappers-literal": function(data) {
+					text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+					var node = Finder.findNode(annotation.start, ast, {parents:true});
+					if(node) {
+						var parent = node.parents[node.parents.length-1];
+						if(parent.type === 'NewExpression') {
+							switch(parent.callee.name) {
+								case 'Math':
+								case 'JSON': {
+									return { "text" : parent.callee.name, "start" : parent.range[0], "end" : parent.range[1]};
+								}
+								case 'String': {
+									var s = '';
+									if(parent.arguments.length > 0) {
+										var str = parent.arguments[0];
+										if(str.type === 'Literal') {
+											s = String(str.value);	
+										} else if(str.type === 'Identifier') {
+											if(str.name === 'undefined') {
+												s = String(undefined);
+											} else if(str.name === 'NaN') {
+												s = String(NaN);
+											} else {
+												s = String(str.name);
+											}
+										}
+									} else {
+										s = String();
+									}
+									return { "text" : '"'+s.toString()+'"', "start" : parent.range[0], "end" : parent.range[1]}; //$NON-NLS-1$ //$NON-NLS-2$
+								}
+								case 'Number': {
+									var nu;
+									if(parent.arguments.length > 0) {
+										var num = parent.arguments[0];
+										if(num.type === 'Literal') {
+											nu = Number(num.value);
+										} else if(num.type === 'Identifier') {
+											if(num.name === 'undefined') {
+												nu = Number(undefined);
+											} else if(num.name === 'NaN') {
+												nu = Number(NaN);
+											} else {
+												nu = Number(num.name);
+											}
+										} else {
+											nu = Number(num);
+										}
+									} else {
+										nu = Number();
+									}
+									return { "text" : nu.toString(), "start" : parent.range[0], "end" : parent.range[1]};
+								}
+								case 'Boolean': {
+									var b;
+									if(parent.arguments.length > 0) {
+										var arg = parent.arguments[0];
+										if(arg.type === 'ObjectExpression') {
+											b = true;
+										} else if(arg.type === 'Literal') {
+											b = Boolean(arg.value);
+										} else if(arg.type === 'Identifier') {
+											if(arg.name === 'undefined') {
+												b = Boolean(undefined);
+											} else if(arg.name === 'NaN') {
+												b = Boolean(NaN);
+											} else {
+												b = Boolean(arg.name);
+											}
+										} else if(arg.type === 'UnaryExpression' && arg.operator === '-' && 
+											arg.argument.type === 'Literal' && typeof arg.argument.value === 'number') {
+											b = false;
+										}
+									} else {
+										b = false;
+									}
+									return { "text" : b.toString(), "start" : parent.range[0], "end" : parent.range[1] };
+								}
+							}
+						}
+					}	
 				},
 				"no-undef": function(data){
 					text = data["text"];

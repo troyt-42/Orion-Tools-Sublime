@@ -89,6 +89,10 @@ class quickFixesLib():
 				"des" : "Rename case",
 				"fix" : self.noDuplicateCaseFix
 			}],
+			"no-dupe-keys" : [{
+				"des" : "Rename key",
+				"fix" : self.noDupeKeysFix
+			}],
 			"no-eq-null" : [{
 				"des" : "Update operator",
 				"fix" : self.eqeqeqFix
@@ -103,6 +107,13 @@ class quickFixesLib():
  			}, {
  				"des" : "Rename right hand variable",
  				"fix" : self.noSelfAssignRenameFix
+ 			}],
+ 			"no-new-wrappers" : [{
+ 				"des" : "Remove 'new' keyword",
+ 				"fix" : self.noNewWrappersFix
+ 			}, {
+ 				"des" : "Convert to literal",
+ 				"fix" : self.noNewWrappersLiteralFix
  			}],
 			"no-undef" : [{
 				"des" : "Add to Global Directive",
@@ -199,6 +210,13 @@ class quickFixesLib():
 		if expected != None:
 			view.erase(edit, sublime.Region(errStart, errEnd))
 			view.insert(edit, min(errStart, errEnd), expected.group(1))
+	def newParensFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "new-parens"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.insert(edit, data["point"], data["text"])
 	def noDebuggerFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "no-debugger"
@@ -216,13 +234,16 @@ class quickFixesLib():
 			view.sel().clear()
 			for pos in group['positions']:
 				view.sel().add(sublime.Region(pos['offset'], pos['offset']+pos['length']))
-	def newParensFix(self, view, edit, index, errStart, errEnd):
+	def noDupeKeysFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
-			"id" : "new-parens"
+			"id" : "no-dupe-keys"
 		}
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.insert(edit, data["point"], data["text"])
+		if data is not None:
+			group = data["groups"][0] #Assume single group
+			view.sel().clear()
+			for pos in group['positions']:
+				view.sel().add(sublime.Region(pos['offset'], pos['offset']+pos['length']))
 	def noSelfAssignFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-self-assign"
@@ -240,6 +261,22 @@ class quickFixesLib():
 			view.sel().clear()
 			for pos in group['positions']:
 				view.sel().add(sublime.Region(pos['offset'], pos['offset']+pos['length']))
+	def noNewWrappersFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-new-wrappers"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
+			view.insert(edit, data["start"], data["text"])
+	def noNewWrappersLiteralFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-new-wrappers-literal"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
+			view.insert(edit, data["start"], data["text"])
 	def noUndefFix(self, view, edit,index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-undef", 
@@ -522,7 +559,7 @@ class orionTooltipCommand(sublime_plugin.TextCommand):
 class executeFixes(sublime_plugin.TextCommand):
 	def run(self, edit, kind, index, errStart, errEnd):
 		quickFixes[kind][index]["fix"](self.view, edit, kind, errStart, errEnd)
-		reLintException = ["Rename right hand variable", "Rename case"]
+		reLintException = ["Rename right hand variable", "Rename case", "Rename key"]
 		if quickFixes[kind][index]["des"] not in reLintException:
 			self.view.run_command("orion_lint")
 
