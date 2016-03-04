@@ -113,6 +113,10 @@ class quickFixesLib():
 				"des" : "Remove gratuitous parentheses",
 				"fix" : self.noExtraParensFix
 			}],
+			"no-extra-semi" : [{
+				"des" : "Remove extra semicolon",
+				"fix" : self.noExtraSemiFix
+			}],
 			"new-parens" : [{
 				"des" : "Add parentheses",
 				"fix" : self.newParensFix
@@ -285,6 +289,8 @@ class quickFixesLib():
 		if data != None:
 			view.erase(edit, sublime.Region(data[0]["start"], data[0]["end"]))
 			view.erase(edit, sublime.Region(data[1]["start"]-1, data[1]["end"]-1))
+	def noExtraSemiFix(self, view, edit, index, errStart, errEnd):
+		view.erase(edit, sublime.Region(errStart, errEnd))
 	def noSelfAssignFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-self-assign"
