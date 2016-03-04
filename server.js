@@ -41,7 +41,7 @@ var defaults = {
 	"no-dupe-keys" : 2,
 	"no-duplicate-case": 2,
 	"no-else-return" : 1,
-	"no-empty-block" : 0,
+	"no-empty-block" : 1,
 	"no-empty-character-class" : 2,
 	"no-empty-label" : 2,
 	"no-eq-null" : 1,

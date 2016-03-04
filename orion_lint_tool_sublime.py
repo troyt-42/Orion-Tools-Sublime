@@ -85,6 +85,10 @@ class quickFixesLib():
 				"des" : "Add missing $NON-NLS$ tag",
 				"fix" : self.missingNlsFix
 			}],
+			"no-comma-dangle" : [{
+				"des" : "Remove extra comma",
+				"fix" : self.noCommaDangleFix
+			}],
 			"no-debugger" : [{
 				"des" : "Remove statement",
 				"fix" : self.noDebuggerFix
@@ -96,6 +100,10 @@ class quickFixesLib():
 			"no-dupe-keys" : [{
 				"des" : "Rename key",
 				"fix" : self.noDupeKeysFix
+			}],
+			"no-empty-block" : [{
+				"des" : "Comment empty block",
+				"fix" : self.noEmptyBlockFix
 			}],
 			"no-eq-null" : [{
 				"des" : "Update operator",
@@ -229,6 +237,8 @@ class quickFixesLib():
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			view.insert(edit, data["point"], data["text"])
+	def noCommaDangleFix(self, view, edit, index, errStart, errEnd):
+		view.erase(edit, sublime.Region(errStart, errEnd))
 	def noDebuggerFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "no-debugger"
@@ -256,6 +266,13 @@ class quickFixesLib():
 			view.sel().clear()
 			for pos in group['positions']:
 				view.sel().add(sublime.Region(pos['offset'], pos['offset']+pos['length']))
+	def noEmptyBlockFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-empty-block"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.insert(edit, data["start"], data["text"])
 	def noSelfAssignFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-self-assign"

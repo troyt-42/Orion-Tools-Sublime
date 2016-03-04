@@ -40934,6 +40934,22 @@ return /******/ (function(modules) { // webpackBootstrap
 						linkModel = {groups: groups};
 					return linkModel;
 				},
+				/** 
+				 * fix for the no-empty-block linting rule
+				 * @callback
+				 */
+				"no-empty-block": function(data) {
+		            text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+	                var linestart = getLineStart(text, annotation.start);
+	                var fix = '//TODO empty block'; //$NON-NLS-1$
+	                var indent = computeIndent(text, linestart, true);
+	                fix = '\n' + indent + fix; //$NON-NLS-1$
+	                fix += computePostfix(text, annotation);
+	                return { "text" : fix, "start" : annotation.start+1, "end" : annotation.start+1};
+		        },
 				"no-dupe-keys": function(data) {
 					annotation = data["annotation"]
 					var start = annotation.start,
