@@ -77,6 +77,10 @@ class quickFixesLib():
 				"des" : "Enclose statements in braces",
 				"fix" : self.curlyFix
 			}],
+			"eqeqeq" : [{
+				"des" : "Update operator",
+				"fix" : self.eqeqeqFix
+			}],
 			"new-parens" : [{
 				"des" : "Add parentheses",
 				"fix" : self.newParensFix
@@ -178,6 +182,11 @@ class quickFixesLib():
 	def curlyFix(self, view, edit,index, errStart, errEnd):
 		view.insert(edit, errStart, "{  ")
 		view.insert(edit, errEnd+3, "  }")
+	def eqeqeqFix(self, view, edit, index, errStart, errEnd):
+		expected = re.match(r"^.*\'(\!==|===)\'", messages[index])
+		if expected != None:
+			view.erase(edit, sublime.Region(errStart, errEnd))
+			view.insert(edit, errStart, expected.group(1))
 	def newParensFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "new-parens"
@@ -453,7 +462,7 @@ class lintWindowCommand(sublime_plugin.TextCommand):
 			})
 class orionTooltipCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		if self.view.file_name()[len(self.view.file_name()) -3:] == ".js":
+		if self.view.file_name() and self.view.file_name()[len(self.view.file_name()) -3:] == ".js":
 			if self.view.file_name() == None: return
 			selection = self.view.sel()[0] #Assume single selection
 			temp = []
