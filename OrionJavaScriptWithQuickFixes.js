@@ -40883,6 +40883,48 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 					return {};
 				},
+				"no-self-assign": function(data) {
+					text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+					var node = Finder.findNode(annotation.start, ast, {parents:true});
+					if(node) {
+						var p = node.parents[node.parents.length-1];
+						if(p.type === 'AssignmentExpression') {
+							var end = p.range[1];
+							var tok = Finder.findToken(end, ast.tokens);
+							if(tok) {
+								//we want the next one, ignoring whitespace
+								if(tok &&  tok.type === 'Punctuator' && tok.value === ';') {
+									end = tok.range[1]; //clean up trailing semicolons
+								}
+								tok = ast.tokens[tok.index+1];
+								if(tok &&  tok.type === 'Punctuator' && tok.value === ';') {
+									end = tok.range[1]; //clean up trailing semicolons
+								}
+							}
+							return {
+								text: '',
+								start: p.range[0],
+								end: end
+							};
+						}
+					}
+				},
+				"no-self-assign-rename": function(data) {
+					text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+					var node = Finder.findNode(annotation.end, ast);
+					if(node && node.type === 'Identifier') {
+						var start = node.range[0],
+							groups = [{data: {}, positions: [{offset: start, length: node.range[1]-start}]}],
+							linkModel = {groups: groups};
+						return linkModel;
+					}
+				},
 				"no-undef": function(data){
 					text = data["text"];
 					annotation = data["annotation"];	
@@ -40915,7 +40957,8 @@ return /******/ (function(modules) { // webpackBootstrap
                         return {"point" : point, "text" : fix};
 	            	}
 	            	return name;
-				},/** 
+				},
+				/** 
 		         * alternate id for no-undef-defined linting fix
 		         * @callback
 		         */

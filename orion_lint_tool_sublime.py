@@ -70,14 +70,6 @@ class Req_Error(Exception):
   def __str__(self):
     return self.message
 
-orionInstance = orionInstance()
-quickFixesInstance = quickFixesLib()
-metaMessages = []
-messages = []
-messageLocs = []
-messageStatus = []
-globalVariables = []
-quickFixes = []
 class quickFixesLib():
 	def __init__(self):
 		self.defaultFixes = {
@@ -85,6 +77,13 @@ class quickFixesLib():
 				"des" : "Enclose statements in braces",
 				"fix" : self.curlyFix
 			}],
+			"no-self-assign":[{
+				"des" : "Remove assignment",
+				"fix" : self.noSelfAssignFix
+ 			}, {
+ 				"des" : "Rename right hand variable",
+ 				"fix" : self.noSelfAssignRenameFix
+ 			}],
 			"no-undef" : [{
 				"des" : "Add to Global Directive",
 				"fix" : self.noUndefFix
@@ -175,6 +174,23 @@ class quickFixesLib():
 	def curlyFix(self, view, edit,index, errStart, errEnd):
 		view.insert(edit, errStart, "{  ")
 		view.insert(edit, errEnd+3, "  }")
+	def noSelfAssignFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = { 
+			"id" : "no-self-assign"
+			}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data is not None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
+	def noSelfAssignRenameFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = { 
+			"id" : "no-self-assign-rename"
+			}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data is not None:
+			group = data["groups"][0] #Assume single group
+			view.sel().clear()
+			for pos in group['positions']:
+				view.sel().add(sublime.Region(pos['offset'], pos['offset']+pos['length']))
 	def noUndefFix(self, view, edit,index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-undef", 
@@ -267,6 +283,15 @@ class quickFixesLib():
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			view.erase(edit, sublime.Region(data["start"], data["end"]))
+
+orionInstance = orionInstance()
+quickFixesInstance = quickFixesLib()
+metaMessages = []
+messages = []
+messageLocs = []
+messageStatus = []
+globalVariables = []
+quickFixes = []
 
 class orionListeners(sublime_plugin.EventListener):
 	def __init__(self):
@@ -444,7 +469,9 @@ class orionTooltipCommand(sublime_plugin.TextCommand):
 class executeFixes(sublime_plugin.TextCommand):
 	def run(self, edit, kind, index, errStart, errEnd):
 		quickFixes[kind][index]["fix"](self.view, edit, kind, errStart, errEnd)
-		self.view.run_command("orion_lint")
+		reLintException = ["Rename right hand variable"]
+		if quickFixes[kind][index]["des"] not in reLintException:
+			self.view.run_command("orion_lint")
 
 
 
