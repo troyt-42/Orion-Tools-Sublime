@@ -198,7 +198,7 @@ class quickFixesLib():
 		expected = re.match(r"^.*\'(\!==|===)\'", messages[index])
 		if expected != None:
 			view.erase(edit, sublime.Region(errStart, errEnd))
-			view.insert(edit, errStart, expected.group(1))
+			view.insert(edit, min(errStart, errEnd), expected.group(1))
 	def noDebuggerFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "no-debugger"
