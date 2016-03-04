@@ -40950,6 +40950,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	                fix += computePostfix(text, annotation);
 	                return { "text" : fix, "start" : annotation.start+1, "end" : annotation.start+1};
 		        },
+		        /** fix for the no-extra-parens linting rule */
+				"no-extra-parens": function(data) {
+					text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+		            var token = Finder.findToken(annotation.start, ast.tokens);
+		            var openBracket = ast.tokens[token.index-1];
+		            if (openBracket.value === '('){
+		            	var closeBracket = Finder.findToken(annotation.end, ast.tokens);
+		            	if (closeBracket.value === ')'){
+				            return [
+					            {
+					            	text: '',
+					            	start: openBracket.range[0],
+					            	end: openBracket.range[1]
+					            },
+					            {
+					            	text: '',
+					            	start: closeBracket.range[0],
+					            	end: closeBracket.range[1]
+					            }
+			            	];
+		            	}
+	            	}
+	            	return ast.tokens;
+		        },
 				"no-dupe-keys": function(data) {
 					annotation = data["annotation"]
 					var start = annotation.start,

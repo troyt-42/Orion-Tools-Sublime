@@ -109,6 +109,10 @@ class quickFixesLib():
 				"des" : "Update operator",
 				"fix" : self.eqeqeqFix
 			}],
+			"no-extra-parens" : [{
+				"des" : "Remove gratuitous parentheses",
+				"fix" : self.noExtraParensFix
+			}],
 			"new-parens" : [{
 				"des" : "Add parentheses",
 				"fix" : self.newParensFix
@@ -273,6 +277,14 @@ class quickFixesLib():
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			view.insert(edit, data["start"], data["text"])
+	def noExtraParensFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-extra-parens"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.erase(edit, sublime.Region(data[0]["start"], data[0]["end"]))
+			view.erase(edit, sublime.Region(data[1]["start"]-1, data[1]["end"]-1))
 	def noSelfAssignFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-self-assign"
@@ -587,7 +599,7 @@ class orionTooltipCommand(sublime_plugin.TextCommand):
 				lastSel = None
 class executeFixes(sublime_plugin.TextCommand):
 	def run(self, edit, kind, index, errStart, errEnd):
-		quickFixes[kind][index]["fix"](self.view, edit, kind, errStart, errEnd)
+		quickFixes[kind][index]["fix"](self.view, edit, kind, min(errStart, errEnd), max(errStart, errEnd))
 		reLintException = ["Rename right hand variable", "Rename case", "Rename key"]
 		if quickFixes[kind][index]["des"] not in reLintException:
 			self.view.run_command("orion_lint")
