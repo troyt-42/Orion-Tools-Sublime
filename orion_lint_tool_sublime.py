@@ -85,6 +85,10 @@ class quickFixesLib():
 				"des" : "Remove statement",
 				"fix" : self.noDebuggerFix
 			}],
+			"no-duplicate-case" : [{
+				"des" : "Rename case",
+				"fix" : self.noDuplicateCaseFix
+			}],
 			"no-eq-null" : [{
 				"des" : "Update operator",
 				"fix" : self.eqeqeqFix
@@ -202,6 +206,16 @@ class quickFixesLib():
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			view.erase(edit, sublime.Region(data["start"], data["end"]))
+	def noDuplicateCaseFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-duplicate-case"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data is not None:
+			group = data["groups"][0] #Assume single group
+			view.sel().clear()
+			for pos in group['positions']:
+				view.sel().add(sublime.Region(pos['offset'], pos['offset']+pos['length']))
 	def newParensFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "new-parens"
@@ -508,7 +522,7 @@ class orionTooltipCommand(sublime_plugin.TextCommand):
 class executeFixes(sublime_plugin.TextCommand):
 	def run(self, edit, kind, index, errStart, errEnd):
 		quickFixes[kind][index]["fix"](self.view, edit, kind, errStart, errEnd)
-		reLintException = ["Rename right hand variable"]
+		reLintException = ["Rename right hand variable", "Rename case"]
 		if quickFixes[kind][index]["des"] not in reLintException:
 			self.view.run_command("orion_lint")
 

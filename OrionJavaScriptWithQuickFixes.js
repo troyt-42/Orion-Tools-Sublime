@@ -40909,6 +40909,13 @@ return /******/ (function(modules) { // webpackBootstrap
 						end: end
 					};
 				},
+				"no-duplicate-case": function(data) {
+					annotation = data["annotation"]
+					var start = annotation.start,
+						groups = [{data: {}, positions: [{offset: start, length: annotation.end-start}]}],
+						linkModel = {groups: groups};
+					return linkModel;
+				},
 				"no-self-assign": function(data) {
 					text = data["text"];
 					annotation = data["annotation"];
