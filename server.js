@@ -29,7 +29,7 @@ var defaults = {
 	"curly" : 1,
 	"eqeqeq": 1,
 	"missing-doc" : 0, 
-	"missing-nls" : 0,
+	"missing-nls" : 1,
 	"new-parens" : 1,
 	"no-caller": 1,
 	"no-comma-dangle" : 0, 

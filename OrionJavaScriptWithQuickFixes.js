@@ -40883,6 +40883,24 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 					return {};
 				},
+				"missing-nls": function(data){
+					text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+		        		
+	                if(annotation.data && typeof annotation.data.indexOnLine === 'number') {
+		                // Insert the correct non nls comment
+		                var end = getLineEnd(ast.source, annotation.end);
+		                // indexOnLine starts at 0, non-nls comments start at one
+		                var comment = " //$NON-NLS-" + (annotation.data.indexOnLine + 1) + "$"; //$NON-NLS-1$
+		                return {
+		                	text: comment,
+		                	start: end,
+		                	end: end
+		                };
+	                }
+		        },
 				"new-parens": function(data) {
 					text = data["text"];
 					annotation = data["annotation"];

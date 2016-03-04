@@ -81,6 +81,10 @@ class quickFixesLib():
 				"des" : "Update operator",
 				"fix" : self.eqeqeqFix
 			}],
+			"missing-nls" : [{
+				"des" : "Add missing $NON-NLS$ tag",
+				"fix" : self.missingNlsFix
+			}],
 			"no-debugger" : [{
 				"des" : "Remove statement",
 				"fix" : self.noDebuggerFix
@@ -210,6 +214,14 @@ class quickFixesLib():
 		if expected != None:
 			view.erase(edit, sublime.Region(errStart, errEnd))
 			view.insert(edit, min(errStart, errEnd), expected.group(1))
+	def missingNlsFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "missing-nls",
+			"annotation" : { "data" : metaMessages[index]["args"]["data"]}
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.insert(edit, data["start"], data["text"])
 	def newParensFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "new-parens"
