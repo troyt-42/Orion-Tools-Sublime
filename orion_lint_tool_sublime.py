@@ -77,6 +77,10 @@ class quickFixesLib():
 				"des" : "Enclose statements in braces",
 				"fix" : self.curlyFix
 			}],
+			"new-parens" : [{
+				"des" : "Add parentheses",
+				"fix" : self.newParensFix
+			}],
 			"no-self-assign":[{
 				"des" : "Remove assignment",
 				"fix" : self.noSelfAssignFix
@@ -174,6 +178,13 @@ class quickFixesLib():
 	def curlyFix(self, view, edit,index, errStart, errEnd):
 		view.insert(edit, errStart, "{  ")
 		view.insert(edit, errEnd+3, "  }")
+	def newParensFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "new-parens"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.insert(edit, data["point"], data["text"])
 	def noSelfAssignFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-self-assign"

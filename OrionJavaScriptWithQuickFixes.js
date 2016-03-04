@@ -40883,6 +40883,16 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 					return {};
 				},
+				"new-parens": function(data) {
+					text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+					var node = Finder.findNode(annotation.start, ast, {parents:true});
+					if(node && node.type === 'Identifier') {
+						return { "text" : '()', "point" : node.range[1]}; //$NON-NLS-1$
+					}
+				},
 				"no-self-assign": function(data) {
 					text = data["text"];
 					annotation = data["annotation"];
