@@ -117,6 +117,13 @@ class quickFixesLib():
 				"des" : "Remove extra semicolon",
 				"fix" : self.noExtraSemiFix
 			}],
+			"no-fallthrough" : [{
+				"des" : "Add $FALLTRHOUGH$ comment",
+				"fix" : self.noFallthroughFix
+			}, {
+				"des" : "Add break statement",
+				"fix" : self.noFallthroughBreakFix
+			}],
 			"new-parens" : [{
 				"des" : "Add parentheses",
 				"fix" : self.newParensFix
@@ -291,6 +298,20 @@ class quickFixesLib():
 			view.erase(edit, sublime.Region(data[1]["start"]-1, data[1]["end"]-1))
 	def noExtraSemiFix(self, view, edit, index, errStart, errEnd):
 		view.erase(edit, sublime.Region(errStart, errEnd))
+	def noFallthroughFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-fallthrough"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.insert(edit, data["start"], data["text"])
+	def noFallthroughBreakFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-fallthrough-break"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.insert(edit, data["start"], data["text"])
 	def noSelfAssignFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-self-assign"

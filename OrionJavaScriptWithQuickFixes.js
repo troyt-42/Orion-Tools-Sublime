@@ -40984,6 +40984,36 @@ return /******/ (function(modules) { // webpackBootstrap
 						linkModel = {groups: groups};
 					return linkModel;
 				},
+				/** 
+		         * fix for the no-fallthrough linting rule
+		         * @callback
+		         */
+		        "no-fallthrough": function(data) {
+		            text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+	                var linestart = getLineStart(text, annotation.start);
+	                var fix = '//$FALLTHROUGH$'; //$NON-NLS-1$
+	                var indent = computeIndent(text, linestart);
+	                fix += computePostfix(text, annotation, indent);
+	                return { "text" : fix, "start" : annotation.start, "end" : annotation.start};
+		        },
+		        /** 
+		         * alternate fix for the no-fallthrough linting rule
+		         * @callback
+		         */
+		        "no-fallthrough-break": function(data) {
+		        	text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+	                var linestart = getLineStart(text, annotation.start);
+	                var fix = 'break;'; //$NON-NLS-1$
+	                var indent = computeIndent(text, linestart);
+	                fix += computePostfix(text, annotation, indent);
+	                return { "text" : fix, "start" : annotation.start, "end" : annotation.start};
+		        },
 				"no-self-assign": function(data) {
 					text = data["text"];
 					annotation = data["annotation"];
