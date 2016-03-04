@@ -445,27 +445,27 @@ class orionTooltipCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		if self.view.file_name() == None: return
 		selection = self.view.sel()[0] #Assume single selection
+		temp = []
+		tempIndexes = []
+		def close_tooltip(x):
+			if x == 0:
+				messageStatus[index] = False
+			elif x >= 1:
+				if a == selection.a:
+					self.view.run_command("execute_fixes", { "kind" : tempIndexes[x], "index" : x-1, "errStart" : selection.a, "errEnd" : selection.b})
+				else:
+					self.view.run_command("execute_fixes", { "kind" : tempIndexes[x], "index" : x-1, "errStart" : selection.b, "errEnd" : selection.a})
 		for index, loc in enumerate(messageLocs):
 			a = loc.a
 			b = loc.b
 			if a == selection.a and b == selection.b or a == selection.b and b == selection.a:
-				def close_tooltip(x):
-					if x == 0:
-						messageStatus[index] = False
-					elif x >= 1:
-						if a == selection.a:
-							self.view.run_command("execute_fixes", { "kind" : index, "index" : x-1, "errStart" : selection.a, "errEnd" : selection.b})
-						else:
-							self.view.run_command("execute_fixes", { "kind" : index, "index" : x-1, "errStart" : selection.b, "errEnd" : selection.a})
 				if messageStatus[index] == True:
-					if quickFixes[index] == None:
-						self.view.show_popup_menu([messages[index] + "                    Click to ignore"], close_tooltip)
-					else:
-						temp = [messages[index] + "                    Click to close"]
+					temp.append(messages[index] + "                    Click to ignore")
+					tempIndexes.append(index)
+					if quickFixes[index] != None:
 						for i in range(len(quickFixes[index])):
 							temp.append("Quick Fix: " + quickFixes[index][i]["des"])
-						self.view.show_popup_menu(temp, close_tooltip)
-				break
+		self.view.show_popup_menu(temp, close_tooltip)
 class executeFixes(sublime_plugin.TextCommand):
 	def run(self, edit, kind, index, errStart, errEnd):
 		quickFixes[kind][index]["fix"](self.view, edit, kind, errStart, errEnd)
