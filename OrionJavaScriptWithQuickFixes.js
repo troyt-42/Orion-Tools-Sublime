@@ -41056,6 +41056,29 @@ return /******/ (function(modules) { // webpackBootstrap
 						return linkModel;
 					}
 				},
+				/**
+		         * @callback
+		         */
+		        "no-new-array": function(data) {
+		        	text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+	       			var node = Finder.findNode(annotation.start, ast, {parents:true});
+	       			if(node && node.parents) {
+	       				var p = node.parents[node.parents.length-1];
+	       				if(p.type === 'CallExpression' || p.type === 'NewExpression') {
+	       					var fix = '';
+	       					if(p.arguments.length > 0) {
+	       						var start = p.arguments[0].range[0], end = p.arguments[p.arguments.length-1].range[1];
+	       						fix += '[' + ast.source.substring(start, end) + ']';
+	       					} else {
+	       						fix += '[]'; //$NON-NLS-1$
+	       					}
+	       					return { "text" : fix, "start" : p.start, "end" : p.end };
+	       				}
+	       			}
+		        },
 				"no-new-wrappers": function(data) {
 					text = data["text"];
 					annotation = data["annotation"];

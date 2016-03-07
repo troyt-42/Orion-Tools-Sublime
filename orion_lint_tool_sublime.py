@@ -135,6 +135,10 @@ class quickFixesLib():
  				"des" : "Rename right hand variable",
  				"fix" : self.noSelfAssignRenameFix
  			}],
+ 			"no-new-array" : [{
+ 				"des" : "Convert to name literal",
+ 				"fix" : self.noNewArrayFix
+ 			}],
  			"no-new-wrappers" : [{
  				"des" : "Remove 'new' keyword",
  				"fix" : self.noNewWrappersFix
@@ -329,6 +333,14 @@ class quickFixesLib():
 			view.sel().clear()
 			for pos in group['positions']:
 				view.sel().add(sublime.Region(pos['offset'], pos['offset']+pos['length']))
+	def noNewArrayFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-new-array"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data is not None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
+			view.insert(edit, data["start"], data["text"])
 	def noNewWrappersFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "no-new-wrappers"
