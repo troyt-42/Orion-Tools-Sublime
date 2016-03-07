@@ -5,7 +5,7 @@ windows = platform.system() == "Windows"
 env = None
 pluginDir = os.path.abspath(os.path.dirname(__file__))
 
-if platform.system() == "Darwin":
+if platform.system() == "Darwin": 
 	env = os.environ.copy()
 	env["PATH"] += ":/usr/local/bin"
 
@@ -331,6 +331,7 @@ class quickFixesLib():
 			return None
 		except:
 			pass
+		# print(data)
 		return data
 	def fixActionHelper(self, view, edit,index, errStart, errEnd, options):
 		# options includes fields: insert(Boolean), erase(Boolean), id(String), special(Dict)

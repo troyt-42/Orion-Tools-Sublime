@@ -70,8 +70,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		__webpack_require__(88),
 		__webpack_require__(4),
 		__webpack_require__(72),
-		__webpack_require__(89)
-	], __WEBPACK_AMD_DEFINE_RESULT__ = function(TernServer, Occurrences, Esprima, ASTManager, CUProvider) {
+		__webpack_require__(89),
+	    __webpack_require__(90)
+	], __WEBPACK_AMD_DEFINE_RESULT__ = function(TernServer, Occurrences, Esprima, ASTManager, CUProvider, quickFixes) {
 		
 		var useworker = false,
 			scriptresolver,
@@ -245,6 +246,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    	ternserver.type(file, offset, callback);
 	    };
 	    
+	    /**
+	     * @name JavaScript.prototype.quickFixes
+	     * @description Provides a quick fix computer instance
+	     * @param {javascript.ASTManager} astManager The AST manager
+	     */
+	
+	     JavaScript.prototype.quickFixes = new quickFixes.JavaScriptQuickfixesExternalLib(new ASTManager.ASTManager(Esprima));
+	
 	    return JavaScript;
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
@@ -254,7 +263,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*******************************************************************************
 	 * @license
-	 * Copyright (c) 2015 IBM Corporation and others.
+	 * Copyright (c) 2015, 2016 IBM Corporation and others.
 	 * All rights reserved. This program and the accompanying materials are made 
 	 * available under the terms of the Eclipse Public License v1.0 
 	 * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -781,6 +790,9 @@ return /******/ (function(modules) { // webpackBootstrap
 						defNames = jsonOptions.defs;
 						ddir = jsonOptions.defsDir;
 					}
+					if(Array.isArray(jsonOptions.loadEagerly) && jsonOptions.loadEagerly.length > 0) {
+						options.loadEagerly = jsonOptions.loadEagerly;
+					}
 					if (typeof jsonOptions.ecmaVersion === 'number'){
 						options.ecmaVersion = jsonOptions.ecmaVersion;
 					}
@@ -788,10 +800,18 @@ return /******/ (function(modules) { // webpackBootstrap
 						options.dependencyBudget = jsonOptions.dependencyBudget;
 					}
 		        }
+		        function _loadFiles(ternserver, options) {
+		        	if(Array.isArray(options.loadEagerly)) {
+		        		options.loadEagerly.forEach(function(file) {
+		        			ternserver.addFile(file);
+		        		});
+		        	}
+		        }
 		        function defaultStartUp(err) {
 					options.plugins = plugins;
 					options.defs = defs;
 					ternserver = new Tern.Server(options);
+					_loadFiles(ternserver, options);
 					callback(err);
 		        }
 		        if(!options.plugins && (!defNames || defNames.length < 1)) {
@@ -801,6 +821,7 @@ return /******/ (function(modules) { // webpackBootstrap
 						Deferred.all(loadDefs(defNames, ddir)).then(function(json) {
 								options.defs = json;
 								ternserver = new Tern.Server(options);
+								_loadFiles(ternserver, options);
 								callback();
 							}, defaultStartUp);
 			        }, defaultStartUp);
@@ -991,6 +1012,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    
 	    return TernServer;
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
 
 /***/ },
 /* 2 */
@@ -5147,7 +5169,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        finishIfStatement: function (test, consequent, alternate) {
 	            this.type = Syntax.IfStatement;
-	            this.test = test;
+	            this.test = typeof test !== 'undefined' && test !== null ? test : recoveredNode(this, 'Expression'); //ORION
 	            this.consequent = consequent ? consequent : recoveredNode(this, 'Statement'); //ORION
 	            this.alternate = alternate;
 	            this.finish();
@@ -10042,6 +10064,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  exports.resolveFile = resolveFile; //ORION
 	  exports.storeTypeDocs = storeTypeDocs; //ORION
 	  exports.parseDoc = parseDoc; //ORION
+	  exports.findRefs = findRefs; // ORION
+	  exports.findRefsToProperty = findRefsToProperty; // ORION
+	  exports.findRefsToVariable = findRefsToVariable; // ORION
+	  exports.ternError = ternError; // ORION
 	});
 
 
@@ -13225,12 +13251,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 16 */
 /***/ function(module, exports) {
-	if (typeof window === 'undefined') {
-		window = {}
-	}
-	var amdi18n={"__root":{"pluginName":"Orion JavaScript Tool Support","pluginDescription":"This plug-in provides JavaScript tools support for Orion, like editing, search, navigation, validation, and code completion.","error":"Error","warning":"Warning","ignore":"Ignore","ternContentAssist":"Tern JavaScript content assist","ternProjectAssist":"Tern project file content assist","emptyFileTemplateDoc":"Create new default contents for the .tern-project file","prefCodeStyle":"Code Style","prefBestPractices":"Best Practices","prefPotentialProblems":"Potential Programming Problems","sourceOutline":"Source Outline","sourceOutlineTitle":"JavaScript source outline","contentAssist":"JavaScript content assist","eslintValidator":"JavaScript Validator","missingCurly":"Statements not enclosed in braces:","curlyFixName":"Enclose statement in braces","noCaller":"Discouraged 'arguments.caller' or 'arguments.callee' use:","noCommaDangle":"Trailing commas in object expressions:","noCondAssign":"Assignments in conditional expressions:","noConsole":"Discouraged console use in browser code:","noConstantCondition":"Constant as conditional expression:","noRegexSpaces":"Multiple spaces in regular expressions:","noReservedKeys":"Reserved words used as property keys:","noReservedKeysFixName":"Surround key with quotes","noEqeqeq":"Discouraged '==' use:","noDebugger":"Discouraged 'debugger' statement use:","noDebuggerFixName":"Remove statement","noWith":"Discouraged 'with' statement use:","noEval":"Discouraged 'eval()' use:","noImpliedEval":"Discouraged implied 'eval()' use:","noDupeKeys":"Duplicate object keys:","noDupeKeysFixName":"Rename key","noDuplicateCaseFixName":"Rename case","noIterator":"Discouraged __iterator__ property use:","noProto":"Discouraged __proto__ property use:","noUndefInit":"Explicitly initializing variables to undefined:","noundefinitFixName":"Remove assignment","useIsNaN":"NaN not compared with isNaN():","useIsNanFixName":"Use isNaN()","missingDoc":"Missing JSDoc:","missingDocFixName":"Generate element JSDoc","noUnreachable":"Unreachable code:","noFallthrough":"Switch case fall-through:","useBeforeDefine":"Member used before definition:","noEmptyBlock":"Undocumented empty block:","newParens":"Missing parentheses in constructor call:","newparensFixName":"Add parentheses","noNewArray":"Discouraged 'new Array()':","noNewArrayFixName":"Convert to array literal","noNewFunc":"Discouraged 'new Function()':","noNewObject":"Discouraged 'new Object()':","noNewWrappers":"Discouraged wrapper objects:","noNewWrappersLiteralFixName":"Convert to literal","noNewWrappersFixName":"Remove 'new' keyword","noMixedSpacesAndTabs":"Mixed spaces and tabs:","missingSemi":"Missing semicolons:","unusedVars":"Unused variables:","varRedecl":"Variable re-declarations:","varShadow":"Variable shadowing:","undefMember":"Undeclared global reference:","unnecessarySemis":"Unnecessary semicolons:","unusedParams":"Unused parameters:","unsupportedJSLint":"Unsupported environment directive:","noThrowLiteral":"Literal used in 'throw':","noselfassignFixName":"Remove assignment","noselfassignRenameFixName":"Rename right hand variable","missingNls":"Non-externalized string literals (missing $NON-NLS$ tag):","unnecessaryNls":"Unnecessary $NON-NLS$ tags:","generateDocName":"Generate Element Comment","generateDocTooltip":"Generate a JSDoc-like comment for the selected JavaScript element","renameElement":"Rename Element","renameElementTooltip":"Rename the selected JavaScript element","renameFailedTimedOut":"Could not rename element - operation timed out","openDeclName":"Open Declaration","openDeclTooltip":"Open the declaration of the selected element","openImplName":"Open Implementation","openImplTooltip":"Open the implementation of the selected element","noImplFound":"No implementation was found","implTimedOut":"Could not compute implementation, the operation timed out","workspaceRefsName":"Workspace","workspaceRefsTooltip":"Show all references to the selection in the workspace","projectRefsName":"Project","projectRefsTooltip":"Show all references to the selection in the current project","referencesMenuName":"References","referencesMenuTooltip":"Show different kinds of references","noDeclTimedOut":"No declaration was found - operation timed out","validTypeof":"Invalid 'typeof' comparison:","noSparseArrays":"Sparse array declarations:","javascriptValidation":"Javascript Validation","jsHover":"JavaScript Hover Provider","removeExtraSemiFixName":"Remove extra semicolon","addFallthroughCommentFixName":"Add $FALLTHROUGH$ comment","addEmptyCommentFixName":"Comment empty block","addESLintEnvFixName":"Add to eslint-env directive","addESLintGlobalFixName":"Add to globals directive","removeUnusedParamsFixName":"Remove parameter","commentCallbackFixName":"Add @callback to function","eqeqeqFixName":"Update operator","unreachableFixName":"Remove unreachable code","sparseArrayFixName":"Convert to normal array","semiFixName":"Add missing ';'","radix":"Missing radix parameter to parseInt():","unusedVarsUnusedFixName":"Remove unused variable","unusedFuncDeclFixName":"Remove unused function","noCommaDangleFixName":"Remove extra ','","addBBreakFixName":"Add break statement","noShadowGlobals":"Global shadowing:","noThrowLiteralFixName":"Change to Error","missingNlsFixName":"Add missing $NON-NLS$ tag","unnecessaryNlsFixName":"Remove unnecessary $NON-NLS$ tag","funcProposalDescription":" - The name of the function","funcParamProposalDescription":" - Function parameter","eslintRuleProposalDescripton":" - ESLint rule","eslintEnvProposalDescription":" - ESLint environment name","onlineDocumentationProposalEntry":"\n\n[Online documentation](${0})","keywordProposalDescription":" - Keyword","keywordHoverProposal":"ECMAScript reserved keyword","reloadPluginCmd":"Reload","reloadPluginCmdTooltip":"Reload plug-in","reloadAllPluginsCmd":"Reload All","reloadAllPluginsCmdTooltip":"Reload all plug-ins","templateHoverHeader":"Template source code:\n\n","templateAssistHeader":"Templates","keywordAssistHeader":"Keywords","ternPlugins":"Tern Plug-ins","noTernPluginsAvailable":"No Tern plug-ins are currently loaded. This may be because you have not yet activated content assist in a JavaScript file. Tern plug-ins provide type information and code templates for JavaScript.","noDeclFound":"Could not find declaration","deprecatedHoverTitle":"Deprecated.","parametersHoverTitle":"Parameters:","returnsHoverTitle":"Returns:","throwsHoverTitle":"Throws:","callbackHoverTitle":"Callback:","sinceHoverTitle":"Since:","seeAlsoHoverTitle":"See Also:","openFileForTitle":"Open file for","failedToReadFile":"Failed to read file: ${0}","badInlineRename":"In-line rename is only available for local variables and declarations.","failedRename":"In-line rename failed: ${0}","declDisplayName":"${0} (start: ${1}, end: ${2})","declPotentialHeader":"**Potential matches:**\n","typeofOptions":"Typeof Options","functionDecls":"Function Declarations","functionCalls":"Function Calls","propAccess":"Property Access","propWrite":"Property Write","varAccess":"Variable Access","varWrite":"Variable Write","varDecls":"Variable Declarations","regex":"Regular Expressions","strings":"Strings","blockComments":"Block Comments","lineComments":"Line Comments","partial":"Partial Matches","uncategorized":"Uncategorized","parseErrors":"Parse Errors","noFileContents":"Could not compute references: failed to compute file text content","noFileMeta":"Could not compute references: failed to compute file metadata","cannotComputeRefs":"Cannot compute references: ${0}","notAnIdentifier":"Cannot compute references at the selected location: Location is not an identifier","notHtmlOffset":"Not a valid offset in HTML","allProjectRefs":"Finding all project references...","allWorkspaceRefs":"Finding all workspace references...","refsFoundIn":"References found in file: '${0}' (${1}/${2})","addToTernCommand":"Add to .tern-project","addToTernCommandTooltip":"The JavaScript tooling will always load the contents of this file to Tern","accessor-pairs":"Getter and setter accessors not in pairs:","no-control-regex":"Disallow control characters in regular expressions:","no-duplicate-case":"Duplicate case:","no-empty-character-class":"Disallow empty character classes:","no-extra-boolean-cast":"Discourage redundant double negation:","no-extra-parens":"Discourage redundant parentheses:","no-invalid-regexp":"Invalid regular expressions:","no-negated-in-lhs":"Disallow negated left operand of in operator:","no-obj-calls":"Disallow global object as function calls:","no-eq-null":"Disallow null comparisons:","noeqnullFixName":"Update operator","no-else-return":"Unnecessary else after return:","no-empty-label":"No empty labels:","no-self-compare":"Disallow self compare:","no-irregular-whitespace":"Disallow irregular whitespace:","no-self-assign":"Disallow self assignment:","noShadowFixName":"Rename in scope","type-checked-consistent-return":"Discouraged inconsistent returns:","ternDocPluginName":"Doc Comments","ternDocPluginDescription":"Tern plug-in to parse and use JSDoc-like comments for inferencing","orionAMQPPluginName":"Orion AMQP","orionAMQPPluginDescription":"Plug-in that contributes type information and code templates for AMQP.","orionAngularPluginName":"AngularJS","orionAngularPluginDescription":"Plug-in that contributes type information and code templates for AngularJS.","orionComponentPluginName":"ComponentJS","orionComponentPluginDescription":"Plug-in that contributes type information and code templates for ComponentJS.","orionExpressPluginName":"Orion ExpressJS","orionExpressPluginDescription":"Plug-in that contributes type information and code templates for ExpressJS.","orionMongoDBPluginName":"Orion MongoDB","orionMongoDBPluginDescription":"Plug-in that contributes type information and code templates for MongoDB.","orionMySQLPluginName":"Orion MySQL","orionMySQLPluginDescription":"Plug-in that contributes type information and code templates for MySQL.","orionNodePluginName":"Orion Node.js","orionNodePluginDescription":"Plug-in that contributes type information and code templates for Node.js.","orionPostgresPluginName":"Orion PostgreSQL","orionPostgresPluginDescription":"Plug-in that contributes type information and code templates for PostgreSQL.","orionRequirePluginName":"Orion RequireJS","orionRequirePluginDescription":"Plug-in that contributes type information and code templates for RequireJS.","orionRedisPluginName":"Orion Redis","orionRedisPluginDescription":"Plug-in that contributes type information and code templates for Redis.","ternPluginsPluginName":"Orion Tern Plug-in Support","ternPluginsPluginDescription":"Plug-in that allows Orion to inspect and modify plug-ins running in Tern.","openImplPluginName":"Orion Open Implementation Support","openImplPluginDescription":"Plug-in that allows Orion to try to find implementation locations of elements rather than simple declarations","htmlDepPluginName":"Orion HTML Dependency Analysis","htmlDepPluginDescription":"Resolves script block and script tag dependencies","findTypesName":"Orion References Support","findTypesDescription":"Plug-in that provides expanded type-finding support in Orion","eslintPluginName":"ESLint plugin for Tern","eslintPluginDescription":"Provides ESLint linting for Tern","jsdocPluginName":"JSDoc types and completion support","jsdocPluginDescription":"Provides auto-complete and type information for JSDoc","outlinerPluginName":"JavaScript outlining","outlinerPluginDescription":"Provides JavaScript outlining","browser":"Browser global variables.","node":"Node.js global variables and Node.js scoping.","commonjs":"CommonJS global variables and CommonJS scoping (use this for browser-only code that uses Browserify/WebPack).","worker":"Web workers global variables.","amd":"Defines require() and define() as global variables as per the amd spec.","mocha":"Adds all of the Mocha testing global variables.","jasmine":"Adds all of the Jasmine testing global variables for version 1.3 and 2.0.","jest":"Jest global variables.","phantomjs":"PhantomJS global variables.","protractor":"Protractor global variables.","qunit":"QUnit global variables.","jquery":"jQuery global variables.","prototypejs":"Prototype.js global variables.","shelljs":"ShellJS global variables.","meteor":"Meteor global variables.","mongo":"MongoDB global variables.","applescript":"AppleScript global variables.","nashorn":"Java 8 Nashorn global variables.","serviceworker":"Service Worker global variables.","embertest":"Ember test helper globals.","webextensions":"WebExtensions globals.","es6":"Enable all ECMAScript 6 features except for modules.","unknownError":"An unknown error occurred.","failedDeleteRequest":"Failed to delete file from Tern: ${0}","failedReadRequest":"Failed to read file into Tern: ${0}","failedToComputeProposals":"Failed to compute proposals","failedToComputeProposalsNoServer":"Failed to compute proposals, server not started","failedToComputeDecl":"Failed to compute declaration","failedToComputeDeclNoServer":"Failed to compute declaration, server not started","failedToComputeImpl":"Failed to compute implementation","failedToComputeImplNoServer":"Failed to compute implementation, server not started","failedToComputeDoc":"Failed to compute documentation","failedToComputeDocNoServer":"Failed to compute documentation, server not started","failedToComputeOccurrences":"Failed to compute occurrences","failedToComputeOccurrencesNoServer":"failed to compute occurrences, server not started","failedGetInstalledPlugins":"Failed to get installed plug-ins","failedGetInstalledPluginsNoServer":"Failed to get installed plug-ins, server not started","failedGetInstalledDefs":"Failed to get installed Tern definitions","failedGetInstalledDefsNoServer":"Failed to get installed Tern definitions, server not started","failedInstallPlugins":"Failed to install plug-ins","failedInstallPluginsNoServer":"Failed to install plug-ins, server not started","failedRemovePlugins":"Failed to remove plug-ins","failedRemovePluginsNoServer":"Failed to remove plug-ins, server not started","failedEnablementPlugins":"Failed to set enablement of plug-ins","failedEnablementPluginsNoServer":"Failed to set enablement of plug-ins, server not started","failedGetEnvs":"Failed to get contributed environments","failedGetEnvsNoServer":"Failed to get contributed environments, server not started","failedRenameTern":"Failed to compute rename changes","failedRenameNoServer":"Failed to compute rename changes, server not started","failedRefs":"Failed to find references","failedRefsNoServer":"failed to find references - server not started","failedType":"Failed to find type","unknownRequest":"The request '${0}' is unknown","serverNotStarted":"The server has not been started. Request: '${0}'","eslintRuleEnableDisable":"Enable or disable ESLint rule using the ```ruleid:0/1/2``` form.\n\nExample use:\n\n>```/* eslint semi:1, no-console:0, no-redeclare:2 */```","eslintEnvDirective":"Specify which environments are used in this JavaScript file.\n\nExample use:\n\n>```/* eslint-env amd, node, broswer */```","eslintRuleEnable":"Enable a given set of ESLint rules.\n\nExample use:\n\n>```/* eslint-enable semi, no-console, no-redeclare */```","eslintRuleDisable":"Disable a given set of ESLint rules.\n\nExample use:\n\n>```/* eslint-disable semi, no-console, no-redeclare */```","failedToComputeProblems":"Failed to compute ESLint problems/markers","failedToComputeOutline":"Failed to compute outline"}};amdi18n.init=function (language){
-	    
+
+	var amdi18n={"__root":{"pluginName":"Orion JavaScript Tool Support","pluginDescription":"This plug-in provides JavaScript tools support for Orion, like editing, search, navigation, validation, and code completion.","error":"Error","warning":"Warning","ignore":"Ignore","ternContentAssist":"Tern JavaScript content assist","ternProjectAssist":"Tern project file content assist","emptyFileTemplateDoc":"Create new default contents for the .tern-project file","prefCodeStyle":"Code Style","prefBestPractices":"Best Practices","prefPotentialProblems":"Potential Programming Problems","sourceOutline":"Source Outline","sourceOutlineTitle":"JavaScript source outline","contentAssist":"JavaScript content assist","eslintValidator":"JavaScript Validator","missingCurly":"Statements not enclosed in braces:","curlyFixName":"Enclose statement in braces","noCaller":"Discouraged 'arguments.caller' or 'arguments.callee' use:","noCommaDangle":"Trailing commas in object expressions:","noCondAssign":"Assignments in conditional expressions:","noConsole":"Discouraged console use in browser code:","noConstantCondition":"Constant as conditional expression:","noRegexSpaces":"Multiple spaces in regular expressions:","noReservedKeys":"Reserved words used as property keys:","noReservedKeysFixName":"Surround key with quotes","noEqeqeq":"Discouraged '==' use:","noDebugger":"Discouraged 'debugger' statement use:","noDebuggerFixName":"Remove statement","noWith":"Discouraged 'with' statement use:","noEval":"Discouraged 'eval()' use:","noImpliedEval":"Discouraged implied 'eval()' use:","noDupeKeys":"Duplicate object keys:","noDupeKeysFixName":"Rename key","noDuplicateCaseFixName":"Rename case","noIterator":"Discouraged __iterator__ property use:","noProto":"Discouraged __proto__ property use:","noUndefInit":"Explicitly initializing variables to undefined:","noundefinitFixName":"Remove assignment","useIsNaN":"NaN not compared with isNaN():","useIsNanFixName":"Use isNaN()","missingDoc":"Missing JSDoc:","missingDocFixName":"Generate element JSDoc","noUnreachable":"Unreachable code:","noFallthrough":"Switch case fall-through:","useBeforeDefine":"Member used before definition:","noEmptyBlock":"Undocumented empty block:","newParens":"Missing parentheses in constructor call:","newparensFixName":"Add parentheses","noNewArray":"Discouraged 'new Array()':","noNewArrayFixName":"Convert to array literal","noNewFunc":"Discouraged 'new Function()':","noNewObject":"Discouraged 'new Object()':","noNewWrappers":"Discouraged wrapper objects:","noNewWrappersLiteralFixName":"Convert to literal","noNewWrappersFixName":"Remove 'new' keyword","noMixedSpacesAndTabs":"Mixed spaces and tabs:","missingSemi":"Missing semicolons:","unusedVars":"Unused variables:","varRedecl":"Variable re-declarations:","varShadow":"Variable shadowing:","undefMember":"Undeclared global reference:","unnecessarySemis":"Unnecessary semicolons:","unusedParams":"Unused parameters:","unsupportedJSLint":"Unsupported environment directive:","noThrowLiteral":"Literal used in 'throw':","noselfassignFixName":"Remove assignment","noselfassignRenameFixName":"Rename right hand variable","missingNls":"Non-externalized string literals (missing $NON-NLS$ tag):","unnecessaryNls":"Unnecessary $NON-NLS$ tags:","generateDocName":"Generate Element Comment","generateDocTooltip":"Generate a JSDoc-like comment for the selected JavaScript element","renameElement":"Rename Element","renameElementTooltip":"Rename the selected JavaScript element","renameFailedTimedOut":"Could not rename element - operation timed out","openDeclName":"Open Declaration","openDeclTooltip":"Open the declaration of the selected element","openImplName":"Open Implementation","openImplTooltip":"Open the implementation of the selected element","noImplFound":"No implementation was found","implTimedOut":"Could not compute implementation, the operation timed out","workspaceRefsName":"Workspace","workspaceRefsTooltip":"Show all references to the selection in the workspace","projectRefsName":"Project","projectRefsTooltip":"Show all references to the selection in the current project","referencesMenuName":"References","referencesMenuTooltip":"Show different kinds of references","noDeclTimedOut":"No declaration was found - operation timed out","validTypeof":"Invalid 'typeof' comparison:","noSparseArrays":"Sparse array declarations:","javascriptValidation":"Javascript Validation","jsHover":"JavaScript Hover Provider","removeExtraParensFixName":"Remove gratuitous parentheses","removeExtraSemiFixName":"Remove extra semicolon","addFallthroughCommentFixName":"Add $FALLTHROUGH$ comment","addEmptyCommentFixName":"Comment empty block","addESLintEnvFixName":"Add to eslint-env directive","addESLintGlobalFixName":"Add to globals directive","removeUnusedParamsFixName":"Remove parameter","commentCallbackFixName":"Add @callback to function","eqeqeqFixName":"Update operator","unreachableFixName":"Remove unreachable code","sparseArrayFixName":"Convert to normal array","semiFixName":"Add missing ';'","radix":"Missing radix parameter to parseInt():","radixFixName":"Add default radix","unusedVarsUnusedFixName":"Remove unused variable","unreadVarsFixName":"Remove unread variable","unusedFuncDeclFixName":"Remove unused function","noCommaDangleFixName":"Remove extra ','","addBBreakFixName":"Add break statement","noShadowGlobals":"Global shadowing:","noThrowLiteralFixName":"Change to Error","missingNlsFixName":"Add missing $NON-NLS$ tag","unnecessaryNlsFixName":"Remove unnecessary $NON-NLS$ tag","funcProposalDescription":" - The name of the function","funcParamProposalDescription":" - Function parameter","eslintRuleProposalDescripton":" - ESLint rule","eslintEnvProposalDescription":" - ESLint environment name","onlineDocumentationProposalEntry":"\n\n[Online documentation](${0})","keywordProposalDescription":" - Keyword","keywordHoverProposal":"ECMAScript reserved keyword","reloadPluginCmd":"Reload","reloadPluginCmdTooltip":"Reload plug-in","reloadAllPluginsCmd":"Reload All","reloadAllPluginsCmdTooltip":"Reload all plug-ins","templateHoverHeader":"Template source code:\n\n","templateAssistHeader":"Templates","keywordAssistHeader":"Keywords","ternPlugins":"Tern Plug-ins","noTernPluginsAvailable":"No Tern plug-ins are currently loaded. This may be because you have not yet activated content assist in a JavaScript file. Tern plug-ins provide type information and code templates for JavaScript.","noDeclFound":"Could not find declaration","deprecatedHoverTitle":"Deprecated.","parametersHoverTitle":"Parameters:","returnsHoverTitle":"Returns:","throwsHoverTitle":"Throws:","callbackHoverTitle":"Callback:","callbackText":"This function is used as a callback","sinceHoverTitle":"Since:","seeAlsoHoverTitle":"See Also:","openFileForTitle":"Open file for","failedToReadFile":"Failed to read file: ${0}","badInlineRename":"In-line rename is only available for local variables and declarations.","failedRename":"In-line rename failed: ${0}","declDisplayName":"${0} (start: ${1}, end: ${2})","declPotentialHeader":"**Potential matches:**\n","typeofOptions":"Typeof Options","functionDecls":"Function Declarations","functionCalls":"Function Calls","propAccess":"Property Access","propWrite":"Property Write","varAccess":"Variable Access","varWrite":"Variable Write","varDecls":"Variable Declarations","regex":"Regular Expressions","strings":"Strings","blockComments":"Block Comments","lineComments":"Line Comments","partial":"Partial Matches","uncategorized":"Uncategorized","parseErrors":"Parse Errors","noFileContents":"Could not compute references: failed to compute file text content","noFileMeta":"Could not compute references: failed to compute file metadata","cannotComputeRefs":"Cannot compute references: ${0}","notAnIdentifier":"Cannot compute references at the selected location: Location is not an identifier","notHtmlOffset":"Not a valid offset in HTML","allProjectRefs":"Finding all project references...","allWorkspaceRefs":"Finding all workspace references...","refsFoundIn":"References found in file: '${0}' (${1}/${2})","addToTernCommand":"Add to .tern-project","addToTernCommandTooltip":"The JavaScript tooling will always load the contents of this file to Tern","accessor-pairs":"Getter and setter accessors not in pairs:","no-control-regex":"Disallow control characters in regular expressions:","no-duplicate-case":"Duplicate case:","no-empty-character-class":"Disallow empty character classes:","no-extra-boolean-cast":"Discourage redundant double negation:","no-extra-parens":"Discourage redundant parentheses:","no-invalid-regexp":"Invalid regular expressions:","no-negated-in-lhs":"Disallow negated left operand of in operator:","no-obj-calls":"Disallow global object as function calls:","no-eq-null":"Disallow null comparisons:","noeqnullFixName":"Update operator","no-else-return":"Unnecessary else after return:","no-empty-label":"No empty labels:","no-self-compare":"Disallow self compare:","no-irregular-whitespace":"Disallow irregular whitespace:","no-self-assign":"Disallow self assignment:","noShadowFixName":"Rename in scope","type-checked-consistent-return":"Discouraged inconsistent returns:","ternDocPluginName":"Doc Comments","ternDocPluginDescription":"Tern plug-in to parse and use JSDoc-like comments for inferencing","orionAMQPPluginName":"Orion AMQP","orionAMQPPluginDescription":"Plug-in that contributes type information and code templates for AMQP.","orionAngularPluginName":"AngularJS","orionAngularPluginDescription":"Plug-in that contributes type information and code templates for AngularJS.","orionComponentPluginName":"ComponentJS","orionComponentPluginDescription":"Plug-in that contributes type information and code templates for ComponentJS.","orionExpressPluginName":"Orion ExpressJS","orionExpressPluginDescription":"Plug-in that contributes type information and code templates for ExpressJS.","orionMongoDBPluginName":"Orion MongoDB","orionMongoDBPluginDescription":"Plug-in that contributes type information and code templates for MongoDB.","orionMySQLPluginName":"Orion MySQL","orionMySQLPluginDescription":"Plug-in that contributes type information and code templates for MySQL.","orionNodePluginName":"Orion Node.js","orionNodePluginDescription":"Plug-in that contributes type information and code templates for Node.js.","orionPostgresPluginName":"Orion PostgreSQL","orionPostgresPluginDescription":"Plug-in that contributes type information and code templates for PostgreSQL.","orionRequirePluginName":"Orion RequireJS","orionRequirePluginDescription":"Plug-in that contributes type information and code templates for RequireJS.","orionRedisPluginName":"Orion Redis","orionRedisPluginDescription":"Plug-in that contributes type information and code templates for Redis.","ternPluginsPluginName":"Orion Tern Plug-in Support","ternPluginsPluginDescription":"Plug-in that allows Orion to inspect and modify plug-ins running in Tern.","openImplPluginName":"Orion Open Implementation Support","openImplPluginDescription":"Plug-in that allows Orion to try to find implementation locations of elements rather than simple declarations","htmlDepPluginName":"Orion HTML Dependency Analysis","htmlDepPluginDescription":"Resolves script block and script tag dependencies","findTypesName":"Orion References Support","findTypesDescription":"Plug-in that provides expanded type-finding support in Orion","eslintPluginName":"ESLint plugin for Tern","eslintPluginDescription":"Provides ESLint linting for Tern","jsdocPluginName":"JSDoc types and completion support","jsdocPluginDescription":"Provides auto-complete and type information for JSDoc","outlinerPluginName":"JavaScript outlining","outlinerPluginDescription":"Provides JavaScript outlining","browser":"Browser global variables.","node":"Node.js global variables and Node.js scoping.","commonjs":"CommonJS global variables and CommonJS scoping (use this for browser-only code that uses Browserify/WebPack).","worker":"Web workers global variables.","amd":"Defines require() and define() as global variables as per the amd spec.","mocha":"Adds all of the Mocha testing global variables.","jasmine":"Adds all of the Jasmine testing global variables for version 1.3 and 2.0.","jest":"Jest global variables.","phantomjs":"PhantomJS global variables.","protractor":"Protractor global variables.","qunit":"QUnit global variables.","jquery":"jQuery global variables.","prototypejs":"Prototype.js global variables.","shelljs":"ShellJS global variables.","meteor":"Meteor global variables.","mongo":"MongoDB global variables.","applescript":"AppleScript global variables.","nashorn":"Java 8 Nashorn global variables.","serviceworker":"Service Worker global variables.","embertest":"Ember test helper globals.","webextensions":"WebExtensions globals.","es6":"Enable all ECMAScript 6 features except for modules.","unknownError":"An unknown error occurred.","failedDeleteRequest":"Failed to delete file from Tern: ${0}","failedReadRequest":"Failed to read file into Tern: ${0}","failedToComputeProposals":"Failed to compute proposals","failedToComputeProposalsNoServer":"Failed to compute proposals, server not started","failedToComputeDecl":"Failed to compute declaration","failedToComputeDeclNoServer":"Failed to compute declaration, server not started","failedToComputeImpl":"Failed to compute implementation","failedToComputeImplNoServer":"Failed to compute implementation, server not started","failedToComputeDoc":"Failed to compute documentation","failedToComputeDocNoServer":"Failed to compute documentation, server not started","failedToComputeOccurrences":"Failed to compute occurrences","failedToComputeOccurrencesNoServer":"failed to compute occurrences, server not started","failedGetInstalledPlugins":"Failed to get installed plug-ins","failedGetInstalledPluginsNoServer":"Failed to get installed plug-ins, server not started","failedGetInstalledDefs":"Failed to get installed Tern definitions","failedGetInstalledDefsNoServer":"Failed to get installed Tern definitions, server not started","failedInstallPlugins":"Failed to install plug-ins","failedInstallPluginsNoServer":"Failed to install plug-ins, server not started","failedRemovePlugins":"Failed to remove plug-ins","failedRemovePluginsNoServer":"Failed to remove plug-ins, server not started","failedEnablementPlugins":"Failed to set enablement of plug-ins","failedEnablementPluginsNoServer":"Failed to set enablement of plug-ins, server not started","failedGetEnvs":"Failed to get contributed environments","failedGetEnvsNoServer":"Failed to get contributed environments, server not started","failedRenameTern":"Failed to compute rename changes","failedRenameNoServer":"Failed to compute rename changes, server not started","failedRefs":"Failed to find references","failedRefsNoServer":"failed to find references - server not started","failedType":"Failed to find type","unknownRequest":"The request '${0}' is unknown","serverNotStarted":"The server has not been started. Request: '${0}'","eslintRuleEnableDisable":"Enable or disable ESLint rule using the ```ruleid:0/1/2``` form.\n\nExample use:\n\n>```/* eslint semi:1, no-console:0, no-redeclare:2 */```","eslintEnvDirective":"Specify which environments are used in this JavaScript file.\n\nExample use:\n\n>```/* eslint-env amd, node, broswer */```","eslintRuleEnable":"Enable a given set of ESLint rules.\n\nExample use:\n\n>```/* eslint-enable semi, no-console, no-redeclare */```","eslintRuleDisable":"Disable a given set of ESLint rules.\n\nExample use:\n\n>```/* eslint-disable semi, no-console, no-redeclare */```","failedToComputeProblems":"Failed to compute ESLint problems/markers","failedToComputeOutline":"Failed to compute outline"}};amdi18n.init=function (language){
 	    if(!language){
+	        if (typeof window === "undefined"){
+	          window = {};
+	        }
 	        if(window._i18n && window._i18n.locale){
 	            language = window._i18n.locale;
 	        }else{
@@ -24545,7 +24571,7 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 					else if(ast.tokens.length > 0) {
 						//error object did not contain the token infos, try to find it
-						token = Finder.findToken(error.index, ast.tokens);	
+						token = Finder.findToken(error.index, ast.tokens);
 					}
 					var msg = error.message;
 					if(errorMap[error.index] === msg) {
@@ -24629,7 +24655,33 @@ return /******/ (function(modules) { // webpackBootstrap
 			 */
 			run: function(server, query, file) {
 				var start = Date.now();
-				var messages = Eslint.verify(new SourceCode(file.text, file.ast), query.config, file.name);
+				var config = query.config;
+				var _tern = Object.create(null);
+				// delegate tern functions
+				_tern.findRefs = function(srv, query, file) {
+					return tern.findRefs(srv, query, file);
+				};
+				_tern.findRefsToVariable = function(srv, query, file, expr, checkShadowing) {
+					return tern.findRefsToVariable(srv, query, file, expr, checkShadowing);
+				};
+				_tern.findRefsToProperty = function(srv, query, expr, prop) {
+					return tern.findRefsToProperty(srv, query, expr, prop);
+				};
+				_tern.ternError = function(msg) {
+					return tern.ternError(msg);
+				};
+				_tern.findExpr = function(file, query, wide) {
+					return tern.findExpr(file, query, wide);
+				};
+				_tern.findExprType = function(srv, query, file, expr) {
+					return tern.findExprType(srv, query, file, expr);
+				};
+				_tern.server = server;
+				_tern.query = query;
+				_tern.file = file;
+				config.tern = _tern;
+				
+				var messages = Eslint.verify(new SourceCode(file.text, file.ast), config, file.name);
 				var end = Date.now() - start;
 				Metrics.logTiming('language tools', 'validation', end, 'application/javascript'); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				var strippedMessages = [];
@@ -27746,7 +27798,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        globals: util.mergeConfigs({}, config.globals),
 	        env: util.mergeConfigs({}, config.env || {}),
 	        settings: util.mergeConfigs({}, config.settings || {}),
-	        ecmaFeatures: util.mergeConfigs(ecmaFeatures, config.ecmaFeatures || {})
+	        ecmaFeatures: util.mergeConfigs(ecmaFeatures, config.ecmaFeatures || {}),
+	        tern: config.tern
 	    };
 	
 	    // can't have global return inside of modules
@@ -27779,9 +27832,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    if (message) {
 	        return createRuleModule;
-	    } else {
-	        throw new Error("No message passed to stub rule");
 	    }
+	    throw new Error("No message passed to stub rule");
 	}
 	
 	/**
@@ -27908,9 +27960,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return ruleConfig;
 	        } else if (Array.isArray(ruleConfig)) {
 	            return ruleConfig[0];
-	        } else {
-	            return 0;
 	        }
+	        return 0;
 	    }
 	
 	    /**
@@ -27921,9 +27972,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function getRuleOptions(ruleConfig) {
 	        if (Array.isArray(ruleConfig)) {
 	            return ruleConfig.slice(1);
-	        } else {
-	            return [];
 	        }
+	        return [];
 	    }
 	
 	    // set unlimited listeners (see https://github.com/eslint/eslint/issues/524)
@@ -27961,7 +28011,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            shebang,
 	            ecmaFeatures,
 	            ecmaVersion,
-	            text = (typeof textOrSourceCode === "string") ? textOrSourceCode : null;
+	            text = typeof textOrSourceCode === "string" ? textOrSourceCode : null;
 	
 	        // set the current parsed filename
 	        currentFilename = filename;
@@ -27993,7 +28043,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return messages;
 	            }
 	
-	            ast = parse(text.replace(/^#!([^\r\n]+)/, function(match, captured) {
+	            ast = parse(text.replace(/^#!([^\r\n]+)/, /* @callback */ function(match, captured) {
 	                shebang = captured;
 	                return "//" + captured;
 	            }), config);
@@ -28035,11 +28085,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                severity = getRuleSeverity(config.rules[key]);
 	                options = getRuleOptions(config.rules[key]);
+	                
+	                var settings = config.settings;
+	                if (!settings) {
+	                		settings = Object.create(null);
+	                	}
+	                	settings.tern = config.tern;
 	
 	                try {
 	                    rule = ruleCreator(new RuleContext(
 	                        key, api, severity, options,
-	                        config.settings, config.ecmaFeatures, config.env // ORION
+	                        settings, config.ecmaFeatures, config.env // ORION
 	                    ));
 	
 	                    // add all the node types as listeners
@@ -28057,9 +28113,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            controller = new estraverse.Controller();
 	
 	            ecmaFeatures = currentConfig.ecmaFeatures;
-	            ecmaVersion = (ecmaFeatures.blockBindings || ecmaFeatures.classes ||
+	            ecmaVersion = ecmaFeatures.blockBindings || ecmaFeatures.classes ||
 	                    ecmaFeatures.modules || ecmaFeatures.defaultParams ||
-	                    ecmaFeatures.destructuring) ? 6 : 5;
+	                    ecmaFeatures.destructuring ? 6 : 5;
 	
 	
 	            // gather data that may be needed by the rules
@@ -28124,9 +28180,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            if (lineDiff === 0) {
 	                return a.column - b.column;
-	            } else {
-	                return lineDiff;
 	            }
+	            return lineDiff;
 	        });
 	
 	        return messages;
@@ -28185,7 +28240,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	
 	        // ensure there's range and text properties, otherwise it's not a valid fix
-	        if (fix && Array.isArray(fix.range) && (typeof fix.text === "string")) {
+	        if (fix && Array.isArray(fix.range) && typeof fix.text === "string") {
 	            problem.fix = fix;
 	        }
 	
@@ -28267,9 +28322,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (scope) {
 	                    if (scope.type === "function-expression-name") {
 	                        return scope.childScopes[0];
-	                    } else {
-	                        return scope;
 	                    }
+	                    return scope;
 	                }
 	
 	            }
@@ -28318,9 +28372,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    api.getFilename = function() {
 	        if (typeof currentFilename === "string") {
 	            return currentFilename;
-	        } else {
-	            return "<input>";
 	        }
+	        return "<input>";
 	    };
 	
 	    /**
@@ -28486,7 +28539,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*******************************************************************************
 	 * @license
-	 * Copyright (c) 2013, 2015 IBM Corporation and others.
+	 * Copyright (c) 2013, 2016 IBM Corporation and others.
 	 * All rights reserved. This program and the accompanying materials are made
 	 * available under the terms of the Eclipse Public License v1.0
 	 * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution
@@ -28526,6 +28579,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			noEmptyLabel, noEqNull, noExtraBoolCast, noExtraParens, noInvalidRegExp, noNegatedInLhs, noObjCalls, noSelfCompare, noIrregularWhitespace) {
 	
 	    var rules = {
+	    	/** @callback */
 	        "curly": function(context) {
 		        		/**
 		        		 * Checks the following AST element for a BlockStatement
@@ -28573,6 +28627,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        			'DoWhileStatement': checkBlock
 		        		};
 	        },
+	        /** @callback */
 			"eqeqeq": function(context) {
 				        function getOperatorToken(context, node) {
 		            		var tokens = context.getTokens(node), len = tokens.length, operator = node.operator;
@@ -28612,6 +28667,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        			}
 		        		};
 	        },
+	        /** @callback */
 			"missing-doc": function(context) {
 	                function validComment(comments) {
 	                    if(comments && comments.leading) {
@@ -28658,10 +28714,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        					case 'ExpressionStatement':
 	        						if(node.expression && node.expression.type === 'AssignmentExpression') {
 	        							var anode = node.expression;
-	        							if(anode.right && (anode.right.type === 'FunctionExpression') && anode.left && (anode.left.type === 'MemberExpression')) {
+	        							if(anode.right && anode.right.type === 'FunctionExpression' && anode.left && anode.left.type === 'MemberExpression') {
 	        								//comments are attached to the enclosing expression statement
 	        								comments = context.getComments(node);
-	        								if(comments.leading.length < 1 && comments.trailing.length < 1) {
+	        								if(!comments || comments.leading.length < 1) {
 	            							    //TODO see https://github.com/jquery/esprima/issues/1071
 	        							        comments = context.getComments(anode.left);
 	            							}
@@ -28685,6 +28741,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			"ExpressionStatement": checkDoc
 	        		};
 	        },
+	        /** @callback */
 			"new-parens": function(context) {
 	        		return {
 	        			'NewExpression' : function(node) {
@@ -28706,6 +28763,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 	        "no-caller": function(context) {
 	                return {
 	                    "MemberExpression": function(node) {
@@ -28724,6 +28782,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                };
 	        },
+	        /** @callback */
 	        "no-comma-dangle": function(context) {
 	                return {
 	                    'ObjectExpression': function(node) {
@@ -28806,6 +28865,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                  'DoWhileStatement': checkForAssignment
 	                };
 	        },
+	        /** @callback */
 	        "no-console": function(context) {
 	                return {
 	                    'MemberExpression': function(node) {
@@ -28818,6 +28878,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                };
 	        },
+	        /** @callback */
 	        "no-constant-condition": function(context) {
 	                /**
 	                 * @param {Object} node The AST node
@@ -28855,6 +28916,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    'ConditionalExpression': checkCondition
 	                };
 	        },
+	        /** @callback */
 			"no-debugger": function(context) {
 	        		return {
 	        			"DebuggerStatement": function(node) {
@@ -28867,6 +28929,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 			"no-dupe-keys": function(context) {
 	        		return {
 	        			"ObjectExpression": function(node) {
@@ -28898,6 +28961,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 			'no-empty-block': function(context) {
 	        		var comments;
 	
@@ -28924,6 +28988,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 			"no-eval": function(context) {
 	        		return {
 	        			"CallExpression": function(node) {
@@ -28942,6 +29007,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 			"no-extra-semi": function(context) {
 	        		return {
 	        			"EmptyStatement": function(node) {
@@ -28958,6 +29024,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 			'no-fallthrough': function(context) {
 	        		function fallsthrough(node) {
 	        		    // cases with no statements or only a single case are implicitly fall-through
@@ -29032,6 +29099,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			 }
 	        		};
 	        },
+	        /** @callback */
 	        "no-implied-eval": function(context) {
 	        		return {
 	        			"CallExpression": function(node) {
@@ -29068,6 +29136,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 	        "no-iterator": function(context) {
 	                return {
 	                    'MemberExpression': function(node) {
@@ -29083,6 +29152,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                };
 	        },
+	        /** @callback */
 	        "no-proto": function(context) {
 	                return {
 	                    'MemberExpression': function(node) {
@@ -29098,6 +29168,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                };
 	        },
+	        /** @callback */
 			'no-jslint': function(context) {
 	        		return {
 	        			'Program' : function(node) {
@@ -29128,6 +29199,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			 }
 	        		};
 	        },
+	        /** @callback */
 			"no-new-array": function(context) {
 			    	function checkNode(node) {
 			    		var callee = node.callee;
@@ -29145,6 +29217,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			'CallExpression': checkNode
 	        		};
 	        },
+	        /** @callback */
 			"no-new-func": function(context) {
 	        		return {
 	        			'NewExpression': function(node) {
@@ -29155,6 +29228,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 			"no-new-object": function(context) {
 			   		return {
 	        			'NewExpression': function(node) {
@@ -29165,6 +29239,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 			"no-new-wrappers": function(context) {
 	        		var wrappers = ["String", "Number", "Math", "Boolean", "JSON"]; //$NON-NLS-4$ //$NON-NLS-3$ //$NON-NLS-2$ //$NON-NLS-1$ //$NON-NLS-0$ //$NON-NLS-5$
 					return {
@@ -29176,12 +29251,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 	        "no-with": function(context) {
 	        		return {'WithStatement': function(node) {
 		        			context.report(node, ProblemMessages['no-with'], null, context.getFirstToken(node));
 		        		}
 	        		};
 	        },
+	        /** @callback */
 			"missing-nls": function(context){
 	        		function reportMissingNLS(node, index){
 	        			var data = Object.create(null);
@@ -29262,9 +29339,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 					};
 	        },
+	        /** @callback */
 	        "unnecessary-nls": function(context){
-	        		function reportUnusedNLS(range, value, nlsCommentValue){
-						context.report({range: range, loc: {start: range[0], end: range[1]}, value: value}, ProblemMessages['unnecessary-nls'], {data: {nlsComment: nlsCommentValue}});
+	        		/**
+			         * @name reportUnusedNLS
+			         * @description Reports unnecessary NLS problem, you must set both the range (index array) and the loc {start/end line/col} on the location argument
+			         * @param location
+			         * @param value
+			         * @param nlsCommentValue
+			         */
+			        function reportUnusedNLS(location, value, nlsCommentValue){
+						context.report({range: location.range, loc: location.loc, value: value}, ProblemMessages['unnecessary-nls'], {data: {nlsComment: nlsCommentValue}});
 	        		}
 	
 	        		return {
@@ -29335,7 +29420,7 @@ return /******/ (function(modules) { // webpackBootstrap
 												if (match[1]){
 													start += 2; // Comment range doesn't include line comment prefix
 												}
-	                    						reportUnusedNLS([start, start+value.length], value, match[0]);	        		
+	                    						reportUnusedNLS({range: [start, start+value.length], loc: comment.loc}, value, match[0]);	        		
 								        	}
 								        }
 								    }
@@ -29369,13 +29454,14 @@ return /******/ (function(modules) { // webpackBootstrap
 										if (match[1]){
 											start += 2; // Comment range doesn't include line comment prefix
 										}
-	            						reportUnusedNLS([start, start+value.length], value, match[0]);	
+	            						reportUnusedNLS({range: [start, start+value.length], loc: comment.loc}, value, match[0]);	
 	            					}
 	                			}
 	                    	}
 	                    }
 					};
 	        },
+	        /** @callback */
 			"no-redeclare": function(context) {
 	                function reportRedeclaration(node, name) {
 	                    context.report(node, ProblemMessages['no-redeclare'], {0:name});
@@ -29403,6 +29489,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    "ArrowFunctionExpression": checkScope
 	                };
 	        },
+	        /** @callback */
 	        "no-regex-spaces": function(context) {
 	
 	                function reportSpaces(node) {
@@ -29430,6 +29517,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                };
 	        },
+	        /** @callback */
 	        "no-reserved-keys": function(context) {
 	                return {
 	                    'ObjectExpression': function(node) {
@@ -29444,6 +29532,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                };
 	        },
+	        /** @callback */
 	        "no-shadow": function(context) {
 	                function addVariables(map, scope) {
 	                    scope.variables.forEach(function(variable) {
@@ -29520,6 +29609,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    "ArrowFunctionExpression": checkScope
 	                };
 	        },
+	        /** @callback */
 	        "no-shadow-global": function(context) {
 	
 	                function checkShadow(node) {
@@ -29552,6 +29642,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    'VariableDeclarator': checkShadow
 	                };
 	        },
+	        /** @callback */
 			'no-sparse-arrays': function(context) {
 	        		return {
 	        			'ArrayExpression' : function(node){
@@ -29561,6 +29652,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 	        "no-throw-literal": function(context) {
 	                return {
 	                    "ThrowStatement": function(node) {
@@ -29585,6 +29677,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                };
 	        },
+	        /** @callback */
 			"no-undef": function(context) {
 	                function isImplicitGlobal(variable) {
 	                    return variable.defs.every(function(def) {
@@ -29616,10 +29709,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	            	                var variable = getDeclaredGlobalVariable(globalScope, ref),
 	            	                    name = ref.identifier.name;
 	            	                if (!variable) {
-	            	                    var env = Finder.findESLintEnvForMember(name);
-	            	                    var inenv = env ? '-inenv' : ''; //$NON-NLS-1$
-	            	                    var nls = 'no-undef-defined'; //$NON-NLS-1$
-	            	                    context.report(ref.identifier, ProblemMessages['no-undef-defined'], {0:name, nls: nls, pid: nls+inenv});
+	            	                	// Check if Tern knows about a definition in another file
+	            	                	var env = Finder.findESLintEnvForMember(name);
+	            	                    var tern = context.getTern();
+										var query = tern.query;
+										query.end = ref.identifier.start;
+										var foundType = null;
+										try {
+											var expr = tern.findExpr(tern.file, query);
+											var type = tern.findExprType(tern.server, query, tern.file, expr);
+											// The origin could be a primitive in the same file (a=1;) which we still want to mark
+											// The origin could be an environment, which we still want to mark (eslint-env directive is handled separately)
+											if (type && type.origin && type.origin !== tern.file.name && type.origin !== env){
+												foundType = type;
+											}
+										} catch(e) {
+											//ignore
+										}
+		            	                if (!foundType){
+		            	                    var inenv = env ? '-inenv' : ''; //$NON-NLS-1$
+		            	                    var nls = 'no-undef-defined'; //$NON-NLS-1$
+		            	                    context.report(ref.identifier, ProblemMessages['no-undef-defined'], {0:name, nls: nls, pid: nls+inenv});
+	            	                    }
 	            	                } else if (ref.isWrite() && variable.writeable === false) {
 	            	                    context.report(ref.identifier, ProblemMessages['no-undef-readonly'], {0:name, nls: 'no-undef-readonly'}); //$NON-NLS-1$
 	            	                }
@@ -29631,6 +29742,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                };
 	        },
+	        /** @callback */
 	        'no-undef-init': function(context) {
 	        		return {
 	        			'VariableDeclarator': function(node) {
@@ -29640,6 +29752,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 			'no-unreachable': function(context) {
 	                /**
 	                 * @description Returns if the statement is 'hoisted'
@@ -29692,6 +29805,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                };
 	        },
+	        /** @callback */
 			"no-unused-params" : function(context) {
 	                function hasCallbackComment(node) {
 	                    if(node && node.leadingComments) {
@@ -29788,6 +29902,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			"ArrowFunctionExpression": check
 	        		};
 	        },
+	        /** @callback */
 			"no-unused-vars": function(context) {
 	        		function isRead(ref) {
 	        			return ref.isRead();
@@ -29816,7 +29931,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	        					var references = getReferences(scope, variable), id = node.id;
 	        					if (!references.length) {
 	        					    if(node.type === 'FunctionDeclaration') {
-	        					       context.report(id, ProblemMessages['no-unused-vars-unused-funcdecl'], {0:id.name, nls: 'no-unused-vars-unused-funcdecl'}); //$NON-NLS-1$
+	        					    	   var tern = context.getTern();
+	        					    	   var refQuery = tern.query;
+								   refQuery.end = node.id.end;
+	        					    	   var refs = null;
+	        					    	   var filename = tern.file.name;
+	        					    	   try {
+	        					    	       refs = tern.findRefs(tern.server, refQuery, tern.file);
+	        					    	   } catch(e) {
+	        					    	      //ignore
+	        					    	   }
+	        					    	   var result = [];
+	        					    	   if (refs && Array.isArray(refs.refs)) {
+	        					    	   		// filtering the refs from the current file - remove the one that matches the current node
+	        					    	   		refs.refs.forEach(function(match) {
+	        					    	   			if (match.file !== filename) {
+	        					    	   				// any match in a different file is a good match
+	        					    	   				result.push(match);
+	        					    	   			}
+	        					    	   		});
+	        					    	   }
+	        					    	   if (result === null || result.length === 0) {
+	        					           context.report(id, ProblemMessages['no-unused-vars-unused-funcdecl'], {0:id.name, nls: 'no-unused-vars-unused-funcdecl'}); //$NON-NLS-1$
+	        					       }
 	        					    } else {
 	        						   context.report(id, ProblemMessages['no-unused-vars-unused'], {0:id.name, nls: 'no-unused-vars-unused'}); //$NON-NLS-1$
 	        						}
@@ -29837,6 +29974,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			"ArrowFunctionExpression": check
 	        		};
 	        },
+	        /** @callback */
 			"no-use-before-define": function(context) {
 	                function booleanOption(b, defaultValue) {
 	            		return typeof b === "boolean" ? b : defaultValue;
@@ -29871,6 +30009,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			"FunctionDeclaration": check
 	        		};
 	        },
+	        /** @callback */
 	        "radix": function(context) {
 	                function checkParseInt(call) {
 	                    var callee = call.callee;
@@ -29895,6 +30034,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    "CallExpression": checkParseInt
 	                };
 	        },
+	        /** @callback */
 			"no-mixed-spaces-and-tabs": function(context) {
 					var ignoredLocations = [];
 					// we define a regular expression that matches any line that starts with spaces after tabs before any other character
@@ -30000,6 +30140,7 @@ return /******/ (function(modules) { // webpackBootstrap
 						"Program:exit": checkProgram
 					};
 			},
+			/** @callback */
 			"semi": function(context) {
 	        		function checkForSemicolon(node) {
 	        			try {
@@ -30043,6 +30184,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			"ContinueStatement": checkForSemicolon
 	        		};
 	        },
+	        /** @callback */
 			"use-isnan": function(context) {
 	        		return {
 	        			'BinaryExpression' : function(node) {
@@ -30059,6 +30201,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        			}
 	        		};
 	        },
+	        /** @callback */
 			'valid-typeof': function(context) {
 	        		//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof
 	        		var symbols = ['undefined', 'object', 'function', 'boolean', 'number', 'string', 'symbol']; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
@@ -30095,6 +30238,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			'no-empty-label': noEmptyLabel,
 			'no-self-compare': noSelfCompare,
 			'no-irregular-whitespace': noIrregularWhitespace,
+			/** @callback */
 			'no-self-assign': function(context) {
 					function checkVariableDeclarator(variableDeclarator) {
 						var init = variableDeclarator.init;
@@ -30120,6 +30264,7 @@ return /******/ (function(modules) { // webpackBootstrap
 						"VariableDeclarator" : checkVariableDeclarator
 					};
 				},
+			/** @callback */
 			'type-checked-consistent-return' : function(context) {
 					var functions = [];
 				
@@ -30148,47 +30293,33 @@ return /******/ (function(modules) { // webpackBootstrap
 				
 					function getValue(node) {
 						if (node.argument) {
-							var type = node.argument.type;
-							switch(type) {
-								case "Literal" :
-									if (node.argument.value === null) {
-										return "null";
-									}
-									return typeof node.argument.value;
-								case "BinaryExpression" :
-									// walk the node to find out if one of the operand is a string
-									var foundType = null;
-									Estraverse.traverse(node.argument, {
-										enter: /** @callback */function(n, parent) {
-											if (n.type === "Literal") {
-												if (n.value !== null) {
-													if (foundType === null) {
-														// get the type of the current Literal
-														foundType = typeof n.value;
-													} else {
-														switch(foundType) {
-															case "object" :
-																return Estraverse.VisitorOption.Break;
-															case "string" :
-																return Estraverse.VisitorOption.Break;
-															case "number" :
-																var nodeType = typeof n.value;
-																if (nodeType !== "number") {
-																	foundType = nodeType;
-																}
-														}
-													}
-												}
-											}
-										}
-									});
-									if(foundType !== null) {
-										return foundType;
-									}
-									return "object";
-								default:
-									return "object";
+							var tern = context.getTern();
+							var query = tern.query;
+							query.end = node.argument.start;
+							var foundType = null;
+							try {
+								var expr = tern.findExpr(tern.file, query);
+								var type = tern.findExprType(tern.server, query, tern.file, expr);
+								if (type) {
+									foundType = type;
+								}
+							} catch(e) {
+								//ignore
 							}
+							if (foundType) {
+								var typeString = foundType.toString();
+								switch(typeString) {
+									case "bool" :
+										return "boolean";
+									case "{}" :
+										return "object";
+									case "?" :
+										return "null";
+									default :
+										return typeString;
+								}
+							}
+							return "object";
 						}
 						return "undefined";
 					}
@@ -30210,7 +30341,6 @@ return /******/ (function(modules) { // webpackBootstrap
 						"ArrowFunctionExpression:exit": exitFunction,
 				
 						"ReturnStatement": function(node) {
-				
 							var returnInfo = functions[functions.length - 1];
 							var returnTypeDefined = "type" in returnInfo;
 				
@@ -30256,6 +30386,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		var _callees = Object.create(null);
 		_mapCallees(['require', 'requirejs', 'importScripts', 'define', 'Worker', 'SharedWorker', 'addEventListener', 'RegExp', //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 		'removeEventListener'], _callees);  //$NON-NLS-1$
+	    var _documentCallees = Object.create(null);
+	    _mapCallees(['createElement'], _documentCallees); //$NON-NLS-1$
 	    
 	    function _collectLinesWithStringLiterals(node, lineMap){
 	    	
@@ -30296,8 +30428,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    				case 'CallExpression': {
 	    					var callee = node.parent.callee;
 	    					if(callee) {
-	    						if(callee.type === 'MemberExpression' && callee.property && _callees[callee.property.name]) {
-	    							return;
+	    						if(callee.type === 'MemberExpression' && callee.property) {
+	    							if(callee.object && callee.object.type === "Identifier" && callee.object.name === "document" && _documentCallees[callee.property.name]) {
+	    								return;
+	    							} else if(_callees[callee.property.name]) {
+		    							return;
+									}
 	    						} else if(_callees[callee.name]) {
 	    							return;
 	    						}
@@ -32014,6 +32150,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var amdi18n={"__root":{"syntaxErrorIncomplete":"Syntax error, incomplete statement.","syntaxErrorBadToken":"Syntax error on token '${0}', delete this token.","esprimaParseFailure":"Esprima failed to parse this file because an error occurred: ${0}","eslintValidationFailure":"ESLint failed to validate this file because an error occurred: ${0}","curly":"Statement should be enclosed in braces.","curly-description":"Require curly braces for all control statements.","eqeqeq":"Expected '${0}' and instead saw '${1}'.","eqeqeq-description":"Require the use of === and !==.","missing-doc":"Missing documentation for function '${0}'.","missing-doc-description":"Require JSDoc for all functions.","missing-nls":"Non-externalized string literal '${0}'.","missing-nls-description":"Disallow non-externalized string literals.","new-parens":"Missing parentheses invoking constructor.","new-parens-description":"Require parenthesis for constructors.","no-caller":"'arguments.${0}' is deprecated.","no-caller-description":"Warn on use of arguments.callee or arguments.caller.","no-comma-dangle":"Trailing commas in object expressions are discouraged.","no-comma-dangle-description":"Report extra trailing comma in object expressions.","no-cond-assign":"Expected a conditional expression and instead saw an assignment.","no-cond-assign-description":"Disallow assignment statements in control statements like if-else, do-while, while and for statements.","no-console":"Discouraged use of console in browser-based code.","no-console-description":"Disallow the use of 'console' in browser-run code.","no-constant-condition":"Discouraged use of constant as a conditional expression.","no-constant-condition-description":"Disallow use of a constant value as a conditional expression.","no-debugger":"'debugger' statement use is discouraged.","no-debugger-description":"Disallow use of the debugger keyword.","no-dupe-keys":"Duplicate object key '${0}'.","no-dupe-keys-description":"Warn when object contains duplicate keys.","no-empty-block":"Empty block should be removed or commented.","no-empty-block-description":"Warn when a code block is empty.","no-eval":"${0} function calls are discouraged.","no-eval-description":"Disallow use of eval function.","no-extra-semi":"Unnecessary semicolon.","no-extra-semi-description":"Warn about extraneous semi colons.","no-fallthrough":"Switch case may be entered by falling through the previous case.","no-fallthrough-description":"Warn when a switch case falls through.","no-implied-eval":"${0} function calls are discouraged.","no-implied-eval-description":"Disallow use of implied eval function.","no-iterator":"Discouraged __iterator__ property use.","no-iterator-description":"Warn when the __iterator__ property is used.","no-proto":"Discouraged __proto__ property use.","no-proto-description":"Warn when the __proto__ property is used.","no-jslint":"The '${0}' directive is unsupported, please use eslint-env.","no-jslint-description":"Warn when the jslint/jshint directive is used.","no-mixed-spaces-and-tabs":"Mixed spaces and tabs.","no-mixed-spaces-and-tabs-description":"Warn about mixed spaces and tabs.","no-new-array":"Use the array literal notation '[]'.","no-new-array-description":"Disallow use of the Array constructor.","no-new-func":"The Function constructor is eval.","no-new-func-description":"Disallow use of the Function constructor.","no-new-object":"Use the object literal notation '{}' or Object.create(null).","no-new-object-description":"Disallow use of the Object constructor.","no-new-wrappers":"Do not use '${0}' as a constructor.","no-new-wrappers-description":"Disallow creating new String, Number or Boolean via their constructor.","no-redeclare":"'${0}' is already defined.","no-redeclare-description":"Warn when variable or function is redeclared.","no-regex-spaces":"Avoid multiple spaces in regular expressions. Use ' {${0}}' instead.","no-regex-spaces-description":"Warn when multiple spaces are used in regular expressions.","no-reserved-keys":"Reserved words should not be used as property keys.","no-reserved-keys-description":"Warn when a reserved word is used as a property key.","no-shadow":"'${0}' is already declared in the upper scope.","no-shadow-description":"Warn when shadowing variable from upper scope.","no-shadow-global":"Variable '${0}' shadows a global member.","no-shadow-global-description":"Warn when a variable or parameter shadows a member from the global environment.","no-shadow-global-param":"Parameter '${0}' shadows a global member.","no-sparse-arrays":"Sparse array declarations should be avoided.","no-sparse-arrays-description":"Warn when sparse arrays are defined.","no-throw-literal":"Throw an Error instead.","no-throw-literal-description":"Warn when a Literal is used in a throw statement.","no-undef-defined":"'${0}' is undefined.","no-undef-init":"Avoid explicitly initializing variables to 'undefined'.","no-undef-init-description":"Warn when variables are explicitly initialized to undefined.","no-undef-readonly":"'${0}' is read-only.","no-undef-description":"Warn when used variable or function has not been defined.","no-unreachable":"Unreachable code.","no-unreachable-description":"Warn when code is not reachable.","no-unused-params":"Parameter '${0}' is never used.","no-unused-params-description":"Warn when function parameters are not used.","no-unused-vars-unused":"'${0}' is unused.","no-unused-vars-unused-funcdecl":"Function '${0}' is unused.","no-unused-vars-unread":"'${0}' is unread.","no-unused-vars-description":"Warn when declared variables are not used.","no-use-before-define":"'${0}' was used before it was defined.","no-use-before-define-description":"Warn when a variable or function is used before it is defined.","no-with":"Discouraged use of 'with' statement.","no-with-description":"Warn when the with statement is used.","radix":"Missing radix parameter.","radix-description":"Warn when parseInt() is called without the 'radix' parameter.","semi":"Missing semicolon.","semi-description":"Warn about missing semicolons.","unnecessary-nls":"Unnecessary $NON-NLS$ tag.","unnecessary-nls-description":"Disallow unnecessary non-NLS comments.","use-isnan":"Use the isNaN function to compare with NaN.","use-isnan-description":"Disallow comparison to the value NaN.","valid-typeof":"Invalid typeof comparison.","valid-typeof-description":"Warn when incorrectly comparing the result of a typeof expression.","accessor-pairs-description":"Report when accessors don't come in pairs (getter, setter)","no-control-regex-description":"Disallow control characters in regular expressions","no-duplicate-case-description":"Disallow a duplicate case label","no-empty-character-class-description":"Disallow empty character classes","no-extra-boolean-cast-description":"Discourage redundant double negation","no-extra-parens-description":"Discourage redundant parentheses","no-invalid-regexp-description":"Report invalid regular expressions","no-negated-in-lhs-description":"Disallow negated left operand of in operator","no-obj-calls-description":"Disallow global object as function calls","no-eq-null-description":"Disallow null comparisons","no-else-return-description":"Report else after return","no-empty-label-description":"No empty labels","no-self-compare-description":"Disallow self compare","no-irregular-whitespace-description":"No irregular whitespace:","no-self-assign-description":"Disallow self assignment","no-self-assign":"Assigning to itself is pointless.","type-checked-consistent-return-description":"Detect inconsistent return values","inconsistent-return":"Inconsistent return types: '{{type1}}', '{{type2}}'","notNum":"'${0}' must be a number","notArray":"'${0}' must be an array of strings","notEmpty":"'${0}' should not be empty","onlyStrings":"'${0}' entries can only be strings","notObject":"'${0}' must be an object","pluginNotObject":"plugin '${0}' must be an object","noDupes":"Duplicate entries are not allowed","problemInFile":"There is a problem with your .tern-project-file.","openFile":"Open the .tern-project file","errorParsing":"There was an error parsing the JSON in your .tern-project file","multiAttrProblems":"Multiple problems were found with attributes in your .tern-project file.","attrProblem":"A problem with one of the attributes in your .tern-project file was found.","multipleFileMatchesProblem":"Multiple file matches found for: ${0}. Defaulting to: ${1}.","noFileMatchProblem":"No file match found for: ${0}.","tooManyFileMatchProblems":"... (${0} more)","fileMatchProblems":"Problems found in the loadEagerly attribute of your .tern-project file.","fileMatchProgress":"Validating loadEagerly paths in your .tern-project file.","failedWrite":"There was a problem writing to your .tern-project file."}};amdi18n.init=function (language){
 	    if(!language){
+	        if (typeof window === "undefined"){
+	          window = {};
+	        }
 	        if(window._i18n && window._i18n.locale){
 	            language = window._i18n.locale;
 	        }else{
@@ -32510,6 +32649,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return eslint.getSourceCode();
 	    };
 	
+	    this.getTern = function() {
+	    	    return settings.tern;
+	    	};
 	}
 	
 	RuleContext.prototype = {
@@ -35512,7 +35654,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*******************************************************************************
 	 * @license
-	 * Copyright (c) 2013, 2015 IBM Corporation and others.
+	 * Copyright (c) 2013, 2016 IBM Corporation and others.
 	 * All rights reserved. This program and the accompanying materials are made
 	 * available under the terms of the Eclipse Public License v1.0
 	 * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution
@@ -35639,6 +35781,20 @@ return /******/ (function(modules) { // webpackBootstrap
 			 */
 			onInputChanged: function(event) {
 			    this.inputChanged = event;
+			},
+			/**
+			 * Callback from the FileClient
+			 * @param {Object} event a <tt>fileChanged</tt> event
+			 */
+			onFileChanged: function(event) {
+				if(event && event.type === 'FileContentChanged' && Array.isArray(event.files)) {
+					//event = {type, files: [{name, location, metadata: {contentType}}]}
+					event.files.forEach(function(file) {
+						if(file.metadata && file.metadata.contentType === 'application/javascript') {
+							this.cache.remove(this._getKey(file));
+						}
+					}.bind(this));
+				}
 			}
 		});
 		return {
@@ -36361,10 +36517,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        proxy.setText = function(text, start, end) {
 	            if(that._ec) {
 	                return that._ec.setText(text, start, end);
-	            } else {
-	                return new Deferred().resolve(null);
 	            }
+	            return new Deferred().resolve(null);
 	        };
+	        // Our tooling needs access to other functions on the editorContext so copy them here
+	        if (that._ec){
+	        	proxy.getSelections = that._ec.getSelections;
+	        	proxy.setSelection = that._ec.setSelection;
+	    	}
 	        return proxy;
 	    };
 	
@@ -37683,7 +37843,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*******************************************************************************
 	 * @license
-	 * Copyright (c) 2015 IBM Corporation and others.
+	 * Copyright (c) 2015, 2016 IBM Corporation and others.
 	 * All rights reserved. This program and the accompanying materials are made
 	 * available under the terms of the Eclipse Public License v1.0
 	 * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution
@@ -37749,7 +37909,7 @@ return /******/ (function(modules) { // webpackBootstrap
 				"no-throw-literal" : 1,
 				"no-undef" : 2,
 				"no-undef-init" : 1,
-				"no-unreachable" : 2, 
+				"no-unreachable" : 1, 
 				"no-unused-params" : 1,
 				"no-unused-vars" : 1,
 				"no-use-before-define" : 1,
@@ -40663,7 +40823,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*******************************************************************************
 	 * @license
-	 * Copyright (c) 2015 IBM Corporation and others.
+	 * Copyright (c) 2015, 2016 IBM Corporation and others.
 	 * All rights reserved. This program and the accompanying materials are made
 	 * available under the terms of the Eclipse Public License v1.0
 	 * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution
@@ -40751,14 +40911,3041 @@ return /******/ (function(modules) { // webpackBootstrap
 		function onInputChanged(evnt) {
 			inputChanged = evnt;
 		}
-	
+		
+		/**
+		 * Callback from the FileClient
+		 * @param {Object} event a <tt>fileChanged</tt> event
+		 */
+		function onFileChanged(event) {
+			if(event && event.type === 'FileContentChanged' && Array.isArray(event.files)) {
+				//event = {type, files: [{name, location, metadata: {contentType}}]}
+				event.files.forEach(function(file) {
+					if(file.metadata && file.metadata.contentType === 'text/html') {
+						_cache.remove(_getKey(file));
+					}
+				});
+			}
+		}
+		
 		return {
 			getCompilationUnit: getCompilationUnit,
 			onModelChanging: onModelChanging,
+			onFileChanged: onFileChanged,
 			onInputChanged: onInputChanged,
 			setUseCache: setUseCache
 		};
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ },
+/* 90 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__; /*******************************************************************************
+	 * @license
+	 * Copyright (c) 2014, 2016 IBM Corporation and others.
+	 * All rights reserved. This program and the accompanying materials are made 
+	 * available under the terms of the Eclipse Public License v1.0 
+	 * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
+	 * License v1.0 (http://www.eclipse.org/org/documents/edl-v10.html). 
+	 *
+	 * Contributors:
+	 *     IBM Corporation - initial API and implementation
+	 *******************************************************************************/
+	/*eslint-env amd*/
+	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [
+	__webpack_require__(15),
+	__webpack_require__(13),
+	__webpack_require__(91),
+	__webpack_require__(31),
+	__webpack_require__(76),
+	__webpack_require__(71)
+	], __WEBPACK_AMD_DEFINE_RESULT__ = function(Objects, Deferred, TextModel, Finder, CU, Metrics) {
+		
+		/**
+		 * @description Creates a new JavaScript quick fix computer
+		 * @param {javascript.ASTManager} astManager The AST manager
+		 * @param {javascript.RenammeCommand} renameCommand The rename command
+		 * @param {javascript.GenerateDocCommand} generateDocCommand The doc generation command 
+		 * @returns {javascript.JavaScriptQuickfixes} The new quick fix computer instance
+		 * @since 8.0
+		 */
+		function JavaScriptQuickfixes(astManager, renameCommand, generateDocCommand) {
+		   this.astManager = astManager;
+		   this.renamecommand = renameCommand;
+		   this.generatedoc = generateDocCommand;
+		}
+		
+		/**
+		 * @description Creates a new JavaScript quick fix computer for external uses (ie. Sublime plugins)
+		 * @param {javascript.ASTManager} astManager The AST manager
+		 * @returns {javascript.JavaScriptQuickfixesExternalLib} The new quick fix computer instance for external uses
+		 * @since 11.0
+		 */
+		function JavaScriptQuickfixesExternalLib(astManager) {
+		   this.astManager = astManager;
+		}
+		/**
+	    * @description Finds the start of the line in the given text starting at the given offset
+	    * @param {String} text The text
+	    * @param {Number} offset The offset
+	    * @returns {Number} The offset in the text of the new line
+	    */
+	   function getLineStart(text, offset) {
+	       if(!text) {
+	           return 0;
+	       }
+	       if(offset < 0) {
+	           return 0;
+	       }
+	       var off = offset;
+	       var char = text[off];
+	       while(off > -1 && !/[\r\n]/.test(char)) {
+	           char = text[--off];
+	       }
+	       return off+1; //last char inspected will be @ -1 or the new line char
+		}
+			
+		/**
+	    * @description Finds the end of the line in the given text starting at the given offset
+	    * @param {String} text The text
+	    * @param {Number} offset The offset
+	    * @returns {Number} The offset in the text before the new line or end of file
+	    */
+	   function getLineEnd(text, offset) {
+	       if(!text) {
+	           return 0;
+	       }
+	       if(offset < 0) {
+	           return 0;
+	       }
+	       var off = offset;
+	       var char = text[off];
+	       while(off < text.length && !/[\r\n]/.test(char)) {
+	           char = text[++off];
+	       }
+	       return off;
+		}
+			
+		/**
+		 * @description Computes the indent to use in the editor
+		 * @param {String} text The editor text
+		 * @param {Number} linestart The start of the line
+		 * @param {Boolean} extraIndent If we should add an extra indent
+		 * @returns {String} The ammount of indent / formatting for the start of the string
+		 */
+		function computeIndent(text, linestart, extraIndent) {
+		    if(!text || linestart < 0) {
+		        return '';
+		    }
+		    var off = linestart;
+		    var char = text[off];
+		    var preamble = extraIndent ? '\t' : ''; //$NON-NLS-1$
+		    //walk the proceeding whitespace so we will insert formatted at the same level
+		    while(char === ' ' || char === '\t') {
+		       preamble += char;
+		       char = text[++off];
+		    }
+		    return preamble;
+		}
+	
+	    /**
+	     * @description Computes the formatting for the trailing part of the fix
+	     * @param {String} text The editor text
+	     * @param {Object} annotation The annotation object
+	     * @param {String} indent Additional formatting to apply after the fix
+	     * @returns {String} The formatting to apply after the fix
+	     */
+	    function computePostfix(text, annotation, indent) {
+	        if(!text || !annotation) {
+	            return '';
+	        }
+	        var off = annotation.start;
+	        var char = text[off];
+		    var val = '';
+		    var newline = false;
+		    //walk the trailing whitespace so we can see if we need axtra whitespace
+		    while(off >= annotation.start && off <= annotation.end) {
+			    if(char === '\n') {
+			        newline = true;
+			        break;
+			    }
+			    char = text[off++];
+		    }
+		    if(!newline) {
+			    val += '\n'; //$NON-NLS-1$
+		    }
+		    if(typeof indent !== 'undefined') {
+			    val += indent;
+		    }
+		    return val;
+	    }
+	    
+	    /**
+	     * @description Computes the offset for the block comment. i.e. 2 if the block starts with /*, 3 if it starts with /**
+	     * @param {String} text The file text
+	     * @param {Number} offset The doc node offset
+	     * @returns {Number} 2 or 3 depending on the start of the comment block
+	     */
+	    function getDocOffset(text, offset) {
+	        if(text.charAt(offset+1) === '*') {
+	            if(text.charAt(offset+2) === '*') {
+	                return 3;
+	            }
+	            return 2;
+	        }
+	        return 0;
+	    }
+		
+		function updateDirective(text, directive, name, usecommas) {
+	        if(usecommas) {
+		        if(text.slice(directive.length).trim() !== '') {
+		            return text.trim() + ', '+name; //$NON-NLS-1$
+		        }
+		        return text.trim() + ' '+name;  //$NON-NLS-1$
+	        }
+		    return text.trim() + ' '+name;  //$NON-NLS-1$
+	    }
+		
+		function indexOf(list, item) {
+		    if(list && list.length) {
+	            for(var i = 0; i < list.length; i++) {
+	                var p = list[i];
+	                if(item.range[0] === p.range[0] && item.range[1] === p.range[1]) {
+	                    return i;
+	                }
+	            }
+	        }
+	        return -1;
+		}
+		
+		function removeIndexedItem(list, index, editorContext) {
+	        if(index < 0 || index > list.length) {
+	            return;
+	        }
+	        var node = list[index];
+	        if(list.length === 1) {
+	            return editorContext.setText('', node.range[0], node.range[1]);
+	        } else if(index === list.length-1) {
+	            return editorContext.setText('', list[index-1].range[1], node.range[1]);
+	        } else if(node) {
+	            return editorContext.setText('', node.range[0], list[index+1].range[0]);
+	        }
+	        return null;
+	    }
+	
+		function removeIndexedItemExternalLib(list, index) {
+	        if(index < 0 || index > list.length) {
+	            return;
+	        }
+	        var node = list[index];
+	        if(list.length === 1) {
+	            return { "start" : node.range[0], "end" : node.range[1] };
+	        } else if(index === list.length-1) {
+	            return { "start" : list[index-1].range[1], "end" : node.range[1]};
+	        } else if(node) {
+	            return { "start" : node.range[0], "end" : list[index+1].range[0]};
+	        }
+	        return null;
+	    }
+	    
+	    function updateDoc(node, source, editorContext, name) {
+	        if(node.leadingComments && node.leadingComments.length > 0) {
+	            for(var i = node.leadingComments.length-1; i > -1; i--) {
+	                var comment = node.leadingComments[i];
+	                var edit = new RegExp("(\\s*[*]+\\s*(?:@param)\\s*(?:\\{.*\\})?\\s*(?:"+name+")+.*)").exec(comment.value); //$NON-NLS-1$ //$NON-NLS-2$
+	                if(edit) {
+	                    var start = comment.range[0] + edit.index + getDocOffset(source, comment.range[0]);
+	                    return editorContext.setText('', start, start+edit[1].length);
+	                }
+	            }
+	        }
+	        return null;
+	    }
+	
+	    function updateDocExternalLib(node, source, name) {
+	        if(node.leadingComments && node.leadingComments.length > 0) {
+	            for(var i = node.leadingComments.length-1; i > -1; i--) {
+	                var comment = node.leadingComments[i];
+	                var edit = new RegExp("(\\s*[*]+\\s*(?:@param)\\s*(?:\\{.*\\})?\\s*(?:"+name+")+.*)").exec(comment.value); //$NON-NLS-1$ //$NON-NLS-2$
+	                if(edit) {
+	                    var start = comment.range[0] + edit.index + getDocOffset(source, comment.range[0]);
+	                    return {"start" : start, "end" :start+edit[1].length};
+	                }
+	            }
+	        }
+	        return null;
+	    }
+		
+		function hasDocTag(tags, node) {
+			// tags contains all tags that have to be checked
+		    if(node.leadingComments) {
+		        for(var i = 0; i < node.leadingComments.length; i++) {
+		            var comment = node.leadingComments[i];
+		            for (var j = 0, len = tags.length; j < len; j++) {
+		            		var tag = tags[j];
+			            	if(comment.value.indexOf(tag) > -1) {
+			                return true;
+			            }
+			        }
+		        }
+		    }
+		    return false;
+		}
+		
+		function getDirectiveInsertionPoint(node) {
+		    if(node.type === 'Program' && node.body && node.body.length > 0) {
+	            var n = node.body[0];
+	            var val = -1;
+	            switch(n.type) {
+	                case 'FunctionDeclaration': {
+	                    val = getCommentStart(n);
+	                    if(val > -1) {
+	                        return val;
+	                    }
+	                    //TODO see https://github.com/jquery/esprima/issues/1071
+	                    val = getCommentStart(n.id);
+	                    if(val > -1) {
+	                        return val;
+	                    }
+	                    break;
+	                }
+	                case 'ExpressionStatement': {
+	                    if(n.expression && n.expression.right && n.expression.right.type === 'FunctionExpression') {
+	                        val = getCommentStart(n);
+	                        if(val > -1) {
+	                            return val;
+	                        }
+	                        //TODO see https://github.com/jquery/esprima/issues/1071
+	                        val = getCommentStart(n.expression.left);
+	                        if(val > -1) {
+	                            return val;
+	                        }
+	                    }   
+	                }
+	            }
+		    }
+		    return node.range[0];
+		}
+		
+		/**
+		 * @description Returns the offset to use when inserting a comment directive
+		 * @param {Object} node The node to check for comments
+		 * @returns {Number} The offset to insert the comment
+		 * @sicne 9.0
+		 */
+		function getCommentStart(node) {
+		    if(node.leadingComments && node.leadingComments.length > 0) {
+	            var comment = node.leadingComments[node.leadingComments.length-1];
+	            if(/(?:@param|@return|@returns|@type|@constructor|@name|@description)/ig.test(comment.value)) {
+	                //if the immediate comment has any of the tags we use for inferencing, add the directive before it instead of after
+	                return comment.range[0];
+	            }
+	        }
+	        return -1;
+		}
+		
+		var controlStatements = ['IfStatement', 'WhileStatement', 'ForStatement', 'ForInStatement', 'WithStatement', 'DoWhileStatement', 'ForOfStatement']; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+		
+		/**
+		 * @description Walks the parents array and checks to see if there is a control statement as a direct parent
+		 * @param {Object} node The AST node to check
+		 * @returns {Object} The AST node that is a direct control statement parent of the given node, or null
+		 * @since 11.0
+		 */
+		function getControlStatementParent(node) {
+			if(node && node.parents) {
+				var i = node.parents.length-1,
+					p = node.parents[i];
+				while(p && i > -1) {
+					if(controlStatements.indexOf(p.type) > -1) {
+						return p;
+					}
+					p = node.parents[--i];
+				}
+			}
+			else {
+				return null;
+			}
+		}
+		
+		/**
+		 * Takes a quickfix implementation that can be applied to all fixes in a file and applies it to either all annotations (if multiple annotations provided) or
+		 * just to the single annotation.  Handles applying all edits in a single UNDO step as well as setting the caret to the single selected annotation afterward.
+		 * @param editorContext context to apply text edits to
+		 * @param annotation the selected annotation
+		 * @param annotations Array of annotations to apply the fix to
+		 * @param createTextChange {Function} function to create a text edit object (text, start, end) for a given annotation
+		 */
+		function applySingleFixToAll(editorContext, annotation, annotations, createTextChange){
+			if (!annotations){
+				annotations = [annotation];
+			}
+			var edits = [];
+			var annotationIndex = 0;
+			for (var i=0; i<annotations.length; i++) {
+				var current = annotations[i];
+				if (current.id === annotation.id){
+					var currentChange = createTextChange(current);
+					if (Array.isArray(currentChange)){
+						if (current.start === annotation.start && current.end === annotation.end){
+							annotationIndex = i;
+						}
+						for (var j=0; j<currentChange.length; j++) {
+							var theChange = currentChange[j];
+							edits.push({text: theChange.text, range: {start: theChange.start, end: theChange.end}});
+						}
+					} else if (typeof currentChange === 'object'){
+						edits.push({text: currentChange.text, range: {start: currentChange.start, end: currentChange.end}});
+						if (current.start === annotation.start && current.end === annotation.end){
+							annotationIndex = i;
+						}
+					} 
+				}
+			}
+			// To use setText() with multiple selections they must be in range order
+			edits = edits.sort(function(a, b){
+				return a.range.start - b.range.start;
+			});
+			var textEdits = [];
+			var rangeEdits = [];
+			for (i=0; i<edits.length; i++) {
+				textEdits.push(edits[i].text);
+				rangeEdits.push(edits[i].range);
+			}
+	    	return editorContext.setText({text: textEdits, selection: rangeEdits}).then(function(){
+	    		return editorContext.getSelections().then(function(selections){
+	    			if (selections.length > 0){
+	    				var selection = selections[selections.length > annotationIndex ? annotationIndex : 0];
+	    				return editorContext.setSelection(selection.start, selection.end, true);	
+					}
+	    		});
+	    	});
+		}
+		
+		Objects.mixin(JavaScriptQuickfixes.prototype, /** @lends javascript.JavaScriptQuickfixes.prototype*/ {
+			/**
+			 * @description Editor command callback
+			 * @function
+			 * @param {orion.edit.EditorContext} editorContext The editor context
+			 * @param {Object} context The context params
+			 */
+			execute: function(editorContext, context) {
+			    var id = context.annotation.fixid ? context.annotation.fixid : context.annotation.id;
+			    delete context.annotation.fixid;
+			    Metrics.logEvent('language tools', 'quickfix', id, 'application/javascript'); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			    var fixFunc = this.fixes[id];
+			    if (fixFunc) {
+		            return editorContext.getFileMetadata().then(function(meta) {
+		                if(meta.contentType.id === 'text/html') {
+		                    return editorContext.getText().then(function(text) {
+	                           var blocks = Finder.findScriptBlocks(text);
+	                           if(blocks && blocks.length > 0) {
+	                               var cu = new CU(blocks, meta, editorContext);
+	                               return fixFunc.call(this, cu.getEditorContext(), context, this.astManager);
+	                           }
+		                    }.bind(this));
+		                }
+		                return fixFunc.call(this, editorContext, context, this.astManager);
+		            }.bind(this));
+		        }
+			    return new Deferred().resolve(null) ;
+			},
+			fixes : {
+				"radix": function(editorContext, context, astManager) {
+					return astManager.getAST(editorContext).then(function(ast) {
+						return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation) {
+							var node = Finder.findNode(currentAnnotation.start, ast, {parents:true});
+							if(node && node.type === 'Identifier') {
+								node = node.parents[node.parents.length-1];
+								if(node.type === 'CallExpression' && Array.isArray(node.arguments)) {
+									var arg = node.arguments[node.arguments.length-1];
+									return {
+										text: ", 10", //$NON-NLS-1$
+										start: arg.range[1],
+										end: arg.range[1]
+									};
+								}
+							}
+						});
+					});
+				},
+				"curly": function(editorContext, context, astManager) {
+					return astManager.getAST(editorContext).then(function(ast) {
+						var tok = Finder.findToken(context.annotation.start, ast.tokens);
+						if(tok) {
+							tok = ast.tokens[tok.index-1];
+							var idx = tok.range[1],
+								start = tok.range[1],
+								end = context.annotation.end,
+								lineBreak = false;
+							while(idx < context.annotation.start) {
+								if(ast.source.charAt(idx) === '\n') {
+									lineBreak = true;
+									break;
+								}
+								idx++;
+							}
+							var text = ' {'+ast.source.slice(start, end); //$NON-NLS-1$
+							if(lineBreak) {
+								var node = Finder.findNode(context.annotation.start, ast, {parents: true});
+								if(node) {
+									var p = node.parents[node.parents.length-1];
+									var lineStart = getLineStart(ast.source, p.range[0]);
+									var ctrl = getControlStatementParent(node);
+									if(ctrl) {
+										//compute the offset based on the control statement start if we can
+										lineStart = getLineStart(ast.source, ctrl.range[0]);
+									}
+									//only preserve comments and whitespace at the end of the line
+									//erroneous statements should not be enclosed
+									var lineEnd = getLineEnd(ast.source, end);
+									var preserved = '';
+									var nodes = Finder.findNodesForRange(ast, end, lineEnd);
+									if(lineEnd > end && nodes.length < 1) {
+										preserved += ast.source.slice(end, lineEnd);
+										end = lineEnd;
+									}
+									text += preserved+'\n'+computeIndent(ast.source, lineStart, 0)+'}'; //$NON-NLS-1$
+								}
+							} else {
+								text += ' }'; //$NON-NLS-1$
+							}
+							return editorContext.setText(text, start, end);
+						}
+					});
+				},
+				"no-dupe-keys": function(editorContext, context) {
+					var start = context.annotation.start,
+						groups = [{data: {}, positions: [{offset: start, length: context.annotation.end-start}]}],
+						linkModel = {groups: groups};
+					return editorContext.exitLinkedMode().then(function() {
+						return editorContext.enterLinkedMode(linkModel);
+					});
+				},
+				"no-duplicate-case": function(editorContext, context) {
+					var start = context.annotation.start,
+						groups = [{data: {}, positions: [{offset: start, length: context.annotation.end-start}]}],
+						linkModel = {groups: groups};
+					return editorContext.exitLinkedMode().then(function() {
+						return editorContext.enterLinkedMode(linkModel);
+					});
+				},
+				"no-new-wrappers": function(editorContext, context, astManager) {
+					return astManager.getAST(editorContext).then(function(ast) {
+						var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+						if(node) {
+							var parent = node.parents[node.parents.length-1];
+							if(parent.type === 'NewExpression') {
+								var tok = Finder.findToken(parent.range[0], ast.tokens);
+								if(tok && tok.type === 'Keyword' && tok.value === 'new') {
+									var text = '';
+									var end = tok.range[1],
+										start = tok.range[0],
+										prev = ast.tokens[tok.index-1];
+									if(prev.range[1] < tok.range[0]) {
+										end = node.range[0];
+										start = prev.range[1]+1;
+									} else if(node.range[0] - end > 1) {
+										end += node.range[0] - end - 1;
+									}
+									if(parent.callee.name === 'Math' || parent.callee.name === 'JSON') {
+										//also get rid of the params - these two have no functional equivilent
+										end = parent.range[1];
+										text = parent.callee.name;
+									}
+									return editorContext.setText(text, start, end);
+								}
+							}
+						}
+					}); 			
+				},
+				"no-new-wrappers-literal": function(editorContext, context, astManager) {
+					return astManager.getAST(editorContext).then(function(ast) {
+						var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+						if(node) {
+							var parent = node.parents[node.parents.length-1];
+							if(parent.type === 'NewExpression') {
+								switch(parent.callee.name) {
+									case 'Math':
+									case 'JSON': {
+										return editorContext.setText(parent.callee.name, parent.range[0], parent.range[1]);
+									}
+									case 'String': {
+										var s = '';
+										if(parent.arguments.length > 0) {
+											var str = parent.arguments[0];
+											if(str.type === 'Literal') {
+												s = String(str.value);	
+											} else if(str.type === 'Identifier') {
+												if(str.name === 'undefined') {
+													s = String(undefined);
+												} else if(str.name === 'NaN') {
+													s = String(NaN);
+												} else {
+													s = String(str.name);
+												}
+											}
+										} else {
+											s = String();
+										}
+										return editorContext.setText('"'+s.toString()+'"', parent.range[0], parent.range[1]); //$NON-NLS-1$ //$NON-NLS-2$
+									}
+									case 'Number': {
+										var nu;
+										if(parent.arguments.length > 0) {
+											var num = parent.arguments[0];
+											if(num.type === 'Literal') {
+												nu = Number(num.value);
+											} else if(num.type === 'Identifier') {
+												if(num.name === 'undefined') {
+													nu = Number(undefined);
+												} else if(num.name === 'NaN') {
+													nu = Number(NaN);
+												} else {
+													nu = Number(num.name);
+												}
+											} else {
+												nu = Number(num);
+											}
+										} else {
+											nu = Number();
+										}
+										return editorContext.setText(nu.toString(), parent.range[0], parent.range[1]);
+									}
+									case 'Boolean': {
+										var b;
+										if(parent.arguments.length > 0) {
+											var arg = parent.arguments[0];
+											if(arg.type === 'ObjectExpression') {
+												b = true;
+											} else if(arg.type === 'Literal') {
+												b = Boolean(arg.value);
+											} else if(arg.type === 'Identifier') {
+												if(arg.name === 'undefined') {
+													b = Boolean(undefined);
+												} else if(arg.name === 'NaN') {
+													b = Boolean(NaN);
+												} else {
+													b = Boolean(arg.name);
+												}
+											} else if(arg.type === 'UnaryExpression' && arg.operator === '-' && 
+												arg.argument.type === 'Literal' && typeof arg.argument.value === 'number') {
+												b = false;
+											}
+										} else {
+											b = false;
+										}
+										return editorContext.setText(b.toString(), parent.range[0], parent.range[1]);
+									}
+								}
+							}
+						}
+					}); 			
+				},
+				"no-debugger" : function(editorContext, context, astManager) {
+					return astManager.getAST(editorContext).then(function(ast) {
+						return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation) {
+							var end = currentAnnotation.end;
+							var tok = Finder.findToken(currentAnnotation.end, ast.tokens);
+							if(tok && tok.type === 'Punctuator' && tok.value === ';') {
+								end = tok.range[1];
+							} 
+							return {
+								text: '',
+								start: currentAnnotation.start,
+								end: end
+							};
+						});
+					});
+				},
+				"missing-doc": function(editorContext, context) {
+					context.offset = context.annotation.start;
+					return this.generatedoc.execute.call(this.generatedoc, editorContext, context);
+				},
+				"no-shadow": function(editorContext, context) {
+					return this.renamecommand.execute.call(this.renamecommand, editorContext, context);
+				},
+				"no-shadow-global": function(editorContext, context) {
+					return this.renamecommand.execute.call(this.renamecommand, editorContext, context);
+				},
+				"no-shadow-global-param": function(editorContext, context) {
+					return this.renamecommand.execute.call(this.renamecommand, editorContext, context);
+				},
+				/** fix for eqeqeq linting rule */
+				"eqeqeq": function(editorContext, context) {
+					return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation){
+						var expected = /^.*\'(\!==|===)\'/.exec(currentAnnotation.title);
+						return {
+							text: expected[1],
+							start: currentAnnotation.start,
+							end: currentAnnotation.end
+						};
+					});
+				},
+				/** fix for eqeqeq linting rule */
+				"no-eq-null": function(editorContext, context) {
+					return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation){
+						var expected = /^.*\'(\!==|===)\'/.exec(currentAnnotation.title);
+						return {
+							text: expected[1],
+							start: currentAnnotation.start,
+							end: currentAnnotation.end
+						};
+					});
+				},
+				"no-undef-init": function(editorContext, context, astManager) {
+					return astManager.getAST(editorContext).then(function(ast) {
+						return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation){
+							var node = Finder.findNode(currentAnnotation.start, ast, {parents:true});
+							if(node) {
+								var p = node.parents[node.parents.length-1];
+								if(p.type === 'VariableDeclarator') {
+									return {
+										text: '',
+										start: p.id.range[1],
+										end: p.range[1]
+									};									
+								}
+							}
+						});
+					});
+				},
+				"no-self-assign": function(editorContext, context, astManager) {
+					return astManager.getAST(editorContext).then(function(ast) {
+						return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation) {
+							var node = Finder.findNode(currentAnnotation.start, ast, {parents:true});
+							if(node) {
+								var p = node.parents[node.parents.length-1];
+								if(p.type === 'AssignmentExpression') {
+									var end = p.range[1];
+									var tok = Finder.findToken(end, ast.tokens);
+									if(tok) {
+										//we want the next one, ignoring whitespace
+										tok = ast.tokens[tok.index+1];
+										if(tok &&  tok.type === 'Punctuator' && tok.value === ';') {
+											end = tok.range[1]; //clean up trailing semicolons
+										}
+									}
+									return {
+										text: '',
+										start: p.range[0],
+										end: end
+									};
+								}
+							}
+						});
+					});
+				},
+				"no-self-assign-rename": function(editorContext, context, astManager) {
+					return astManager.getAST(editorContext).then(function(ast) {
+						var node = Finder.findNode(context.annotation.end, ast);
+						if(node && node.type === 'Identifier') {
+							var start = node.range[0],
+								groups = [{data: {}, positions: [{offset: start, length: node.range[1]-start}]}],
+								linkModel = {groups: groups};
+							return editorContext.exitLinkedMode().then(function() {
+								return editorContext.enterLinkedMode(linkModel);
+							});
+						}
+					});
+				},
+				"new-parens": function(editorContext, context, astManager) {
+					return astManager.getAST(editorContext).then(function(ast) {
+						var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+						if(node && node.type === 'Identifier') {
+							return editorContext.setText('()', node.range[1], node.range[1]); //$NON-NLS-1$
+						}
+					});
+				},
+				/** 
+				 * fix for the missing-nls rule
+				 * @callback
+				 */
+		        "missing-nls": function(editorContext, context, astManager){
+		        	return astManager.getAST(editorContext).then(function(ast) {
+		        		return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation) {
+			                if(currentAnnotation.data && typeof currentAnnotation.data.indexOnLine === 'number') {
+				                // Insert the correct non nls comment
+				                var end = getLineEnd(ast.source, currentAnnotation.end);
+				                // indexOnLine starts at 0, non-nls comments start at one
+				                var comment = " //$NON-NLS-" + (currentAnnotation.data.indexOnLine + 1) + "$"; //$NON-NLS-1$
+				                return {
+				                	text: comment,
+				                	start: end,
+				                	end: end
+				                };
+			                }
+		                });
+		            });
+		        },
+				/** fix for the no-comma-dangle linting rule */
+				"no-comma-dangle": function(editorContext, context) {
+					return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation){
+						return {
+							text: '',
+							start: currentAnnotation.start,
+							end: currentAnnotation.end
+						};
+					});
+				},
+				/** 
+				 * fix for the no-empty-block linting rule
+				 * @callback
+				 */
+				"no-empty-block": function(editorContext, context) {
+		            return editorContext.getText().then(function(text) {
+		                var linestart = getLineStart(text, context.annotation.start);
+		                var fix = '//TODO empty block'; //$NON-NLS-1$
+		                var indent = computeIndent(text, linestart, true);
+		                fix = '\n' + indent + fix; //$NON-NLS-1$
+		                fix += computePostfix(text, context.annotation);
+		                return editorContext.setText(fix, context.annotation.start+1, context.annotation.start+1);
+		            });
+		        },
+				/** fix for the no-extra-parens linting rule */
+				"no-extra-parens": function(editorContext, context, astManager) {
+					return astManager.getAST(editorContext).then(function(ast) {
+						return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation) {
+							var token = Finder.findToken(currentAnnotation.start, ast.tokens);
+							var openBracket = ast.tokens[token.index-1];
+							if (openBracket.value === '(') {
+								var closeBracket = Finder.findToken(currentAnnotation.end, ast.tokens);
+								if (closeBracket.value === ')') {
+									var replacementText = "";
+									if (token.index >= 2) {
+										var previousToken = ast.tokens[token.index - 2];
+										if (previousToken.range[1] === openBracket.range[0]
+												&& (previousToken.type === "Identifier" || previousToken.type === "Keyword")) {
+											// now we should also check if there is a space between the '(' and the next token
+											if (token.range[0] === openBracket.range[1]) {
+												replacementText = " ";
+											}
+										}
+									}
+									return [
+										{
+											text: replacementText,
+											start: openBracket.range[0],
+											end: openBracket.range[1]
+										},
+										{
+											text: '',
+											start: closeBracket.range[0],
+											end: closeBracket.range[1]
+										}
+									];
+								}
+							}
+						});
+					});
+				},
+				/** fix for the no-extra-semi linting rule */
+				"no-extra-semi": function(editorContext, context) {
+					return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation){
+			           return {
+			            	text: '',
+			            	start: currentAnnotation.start,
+			            	end: currentAnnotation.end
+			            };
+		            });
+		        },
+		        /** 
+		         * fix for the no-fallthrough linting rule
+		         * @callback
+		         */
+		        "no-fallthrough": function(editorContext, context) {
+		            return editorContext.getText().then(function(text) {
+		                var linestart = getLineStart(text, context.annotation.start);
+		                var fix = '//$FALLTHROUGH$'; //$NON-NLS-1$
+		                var indent = computeIndent(text, linestart);
+		                fix += computePostfix(text, context.annotation, indent);
+		                return editorContext.setText(fix, context.annotation.start, context.annotation.start);
+		            });
+		        },
+		        /** 
+		         * alternate fix for the no-fallthrough linting rule
+		         * @callback
+		         */
+		        "no-fallthrough-break": function(editorContext, context) {
+		            return editorContext.getText().then(function(text) {
+		                var linestart = getLineStart(text, context.annotation.start);
+		                var fix = 'break;'; //$NON-NLS-1$
+		                var indent = computeIndent(text, linestart);
+		                fix += computePostfix(text, context.annotation, indent);
+		                return editorContext.setText(fix, context.annotation.start, context.annotation.start);
+		            });
+		        },
+		        /**
+		         * @callback
+		         */
+		        "no-new-array": function(editorContext, context, astManager) {
+		        	return astManager.getAST(editorContext).then(function(ast) {
+		       			var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+		       			if(node && node.parents) {
+		       				var p = node.parents[node.parents.length-1];
+		       				if(p.type === 'CallExpression' || p.type === 'NewExpression') {
+		       					var fix = '';
+		       					if(p.arguments.length > 0) {
+		       						var start = p.arguments[0].range[0], end = p.arguments[p.arguments.length-1].range[1];
+		       						fix += '[' + ast.source.substring(start, end) + ']';
+		       					} else {
+		       						fix += '[]'; //$NON-NLS-1$
+		       					}
+		       					return editorContext.setText(fix, p.start, p.end);
+		       				}
+		       			}
+		   			});
+		        },
+		        /** 
+		         * for for the no-reserved-keys linting rule
+		         * @callback
+		         */
+		       "no-reserved-keys": function(editorContext, context, astManager) {
+		       		return astManager.getAST(editorContext).then(function(ast) {
+		       			return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation) {
+		       				var node = Finder.findNode(currentAnnotation.start, ast, {parents:true});
+			                if(node && node.type === 'Identifier') {
+				                return {
+				                	text: '"'+node.name+'"', //$NON-NLS-2$ //$NON-NLS-1$
+				                	start: node.range[0],
+				                	end: node.range[1]
+				                };
+							}
+		       			});
+		       		});
+		        },
+		        /** 
+		         * fix for the no-sparse-arrays linting rule
+		         * @callback
+		         */
+		        "no-sparse-arrays": function(editorContext, context, astManager) {
+		            return astManager.getAST(editorContext).then(function(ast) {
+		                var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+		                if(node && node.type === 'ArrayExpression') {
+		                    var model = new TextModel.TextModel(ast.source.slice(context.annotation.start, context.annotation.end));
+		                    var len = node.elements.length;
+		                    var idx = len-1;
+		                    var item = node.elements[idx];
+		                    if(item === null) {
+		                        var end = Finder.findToken(node.range[1], ast.tokens);
+		                        if(end.value !== ']') {
+		                            //for a follow-on token we want the previous - i.e. a token immediately following the ']' that has no space
+		                            end = ast.tokens[end.index-1];
+		                        }
+		                        //wipe all trailing entries first using the ']' token start as the end
+		                        for(; idx > -1; idx--) {
+		                            item = node.elements[idx];
+		                            if(item !== null) {
+		                                break;
+		                            }
+		                        }
+		                        if(item === null) {
+		                            //whole array is sparse - wipe it
+		                            return editorContext.setText(model.getText(), context.annotation.start+1, context.annotation.end-1);
+		                        }
+		                        model.setText('', item.range[1]-context.annotation.start, end.range[0]-context.annotation.start);
+		                    }
+		                    var prev = item;
+		                    for(; idx > -1; idx--) {
+		                        item = node.elements[idx];
+		                        if(item === null || item.range[0] === prev.range[0]) {
+		                            continue;
+		                        }
+		                        model.setText(', ', item.range[1]-context.annotation.start, prev.range[0]-context.annotation.start); //$NON-NLS-1$
+		                        prev = item;
+		                    }
+		                    if(item === null && prev !== null) {
+		                        //need to wipe the front of the array
+		                        model.setText('', node.range[0]+1-context.annotation.start, prev.range[0]-context.annotation.start);
+		                    }
+		                    return editorContext.setText(model.getText(), context.annotation.start, context.annotation.end);
+		                }
+		                return null;
+		            });
+		        },
+		        /** 
+		         * fix for the no-throw-literal linting rule
+		         * @callback
+		         */
+		        "no-throw-literal": function(editorContext, context, astManager) {
+		            return astManager.getAST(editorContext).then(function(ast) {
+		                var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+		                var source = node.raw || ast.source.slice(node.range[0], node.range[1]);
+		                return editorContext.setText('new Error(' + source + ')', context.annotation.start, context.annotation.end); //$NON-NLS-1$
+		            });
+		        },
+		        /** 
+		         * fix for the no-undef-defined linting rule
+		         * @callback
+		         */
+		        "no-undef-defined": function(editorContext, context, astManager) {
+		            function assignLike(node) {
+		                if(node && node.parents && node.parents.length > 0 && node.type === 'Identifier') {
+		                    var parent = node.parents.pop();
+		                    return parent && (parent.type === 'AssignmentExpression' || parent.type === 'UpdateExpression'); 
+		                }
+		                return false;
+		            }
+		            var name = /^'(.*)'/.exec(context.annotation.title);
+		            if(name !== null && typeof name !== 'undefined') {
+		                return astManager.getAST(editorContext).then(function(ast) {
+		                    var comment = null;
+		                    var start = 0;
+		                    var insert = name[1];
+		                    var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+		                    if(assignLike(node)) {
+		                        insert += ':true'; //$NON-NLS-1$
+		                    }
+		                    comment = Finder.findDirective(ast, 'globals'); //$NON-NLS-1$
+		                    if(comment) {
+		                        start = comment.range[0]+2;
+		                        return editorContext.setText(updateDirective(comment.value, 'globals', insert), start, start+comment.value.length); //$NON-NLS-1$
+		                    }
+	                        var point = getDirectiveInsertionPoint(ast);
+	                    	var linestart = getLineStart(ast.source, point);
+	                    	var indent = computeIndent(ast.source, linestart, false);
+	               			var fix = '/*globals '+insert+' */\n' + indent; //$NON-NLS-1$ //$NON-NLS-2$
+	                        return editorContext.setText(fix, point, point);
+		                });
+		            }
+		            return null;
+		        },
+		        /** 
+		         * alternate id for no-undef-defined linting fix
+		         * @callback
+		         */
+		        "no-undef-defined-inenv": function(editorContext, context, astManager) {
+		            var name = /^'(.*)'/.exec(context.annotation.title);
+		            if(name !== null && typeof name !== 'undefined') {
+		                return astManager.getAST(editorContext).then(function(ast) {
+		                    var comment = null;
+		                    var start = 0;
+		                    if(name[1] === 'console') {
+		                        var env = 'node'; //$NON-NLS-1$
+		                    } else {
+		                        env = Finder.findESLintEnvForMember(name[1]);
+		                    }
+		                    if(env) {
+		                        comment = Finder.findDirective(ast, 'eslint-env'); //$NON-NLS-1$
+		                        if(comment) {
+		                            start = getDocOffset(ast.source, comment.range[0]) + comment.range[0];
+		    	                    return editorContext.setText(updateDirective(comment.value, 'eslint-env', env, true), start, start+comment.value.length); //$NON-NLS-1$
+		                        }
+	                            var point = getDirectiveInsertionPoint(ast);
+	                    		var linestart = getLineStart(ast.source, point);
+	                    		var indent = computeIndent(ast.source, linestart, false);
+	               				var fix = '/*eslint-env '+env+' */\n' + indent; //$NON-NLS-1$ //$NON-NLS-2$
+	                            return editorContext.setText(fix, point, point);
+		                    }
+		                });
+		            }
+		            return null;
+		        },
+		        /** 
+		         * fix for the no-unreachable linting rule
+		         * @callback
+		         */
+				"no-unreachable": function(editorContext, context) {
+		            return editorContext.setText('', context.annotation.start, context.annotation.end);    
+		        },
+		        /** 
+		         * fix for the no-unused-params linting rule 
+		         * @callback
+		         */
+		        "no-unused-params": function(editorContext, context, astManager) {
+		            return astManager.getAST(editorContext).then(function(ast) {
+		                var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+		                if(node) {
+		                    var promises = [];
+		                    var parent = node.parents.pop();
+		                    var paramindex = -1;
+		                    for(var i = 0; i < parent.params.length; i++) {
+		                        var p = parent.params[i];
+		                        if(node.range[0] === p.range[0] && node.range[1] === p.range[1]) {
+		                            paramindex = i;
+		                            break;
+		                        }
+		                    }
+		                    var promise = removeIndexedItem(parent.params, paramindex, editorContext);
+		                    if(promise) {
+		                        promises.push(promise);
+		                    }
+		                    switch(parent.type) {
+		                        case 'FunctionExpression': {
+		                            var funcparent = node.parents.pop();
+		                            if(funcparent.type === 'CallExpression' && (funcparent.callee.name === 'define' || funcparent.callee.name === 'require')) {
+		                                var args = funcparent.arguments;
+		                                for(i = 0; i < args.length; i++) {
+		                                    var arg = args[i];
+		                                    if(arg.type === 'ArrayExpression') {
+		                                        promise = removeIndexedItem(arg.elements, paramindex, editorContext);
+		                                        if(promise) {
+		                                            promises.push(promise);
+		                                        }
+		                                        break;
+		                                    }
+		                                }
+		                            } else if(funcparent.type === 'Property' && funcparent.leadingComments && funcparent.leadingComments.length > 0) {
+		                                promise = updateDoc(funcparent, ast.source, editorContext, parent.params[paramindex].name);
+		                                if(promise) {
+		                                    promises.push(promise);
+		                                }
+		                            }
+		                            break;
+		                        }
+		                        case 'FunctionDeclaration': {
+		                           promise = updateDoc(parent, ast.source, editorContext, parent.params[paramindex].name);
+		                           if(promise) {
+		                               promises.push(promise);
+		                           }
+		                           break;
+		                        }
+		                    }
+		                    return Deferred.all(promises);
+		                }
+		                return null;
+		            });
+		        },
+		        /**
+		         * @callback
+		         */
+		        "no-unused-vars-unused": function(editorContext, context, astManager) {
+		            return astManager.getAST(editorContext).then(function(ast) {
+		                var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+		                if(node && node.parents && node.parents.length > 0) {
+		                    var declr = node.parents.pop();
+		                    if(declr.type === 'VariableDeclarator') {
+		                        var decl = node.parents.pop();
+		                        if(decl.type === 'VariableDeclaration') {
+		                            if(decl.declarations.length === 1) {
+		                                return editorContext.setText('', decl.range[0], decl.range[1]);
+		                            }
+	                                var idx = indexOf(decl.declarations, declr);
+	                                if(idx > -1) {
+	                                    return removeIndexedItem(decl.declarations, idx, editorContext);
+	                                }
+		                        }
+		                    }
+		                }
+		                return null;
+		            });
+		        },
+		        /**
+		         * @callback
+		         */
+		        "no-unused-vars-unread": function(editorContext, context, astManager) {
+		            return astManager.getAST(editorContext).then(function(ast) {
+		                var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+		                if(node && node.parents && node.parents.length > 0) {
+		                    var declr = node.parents.pop();
+		                    if(declr.type === 'VariableDeclarator') {
+		                        var decl = node.parents.pop();
+		                        if(decl.type === 'VariableDeclaration') {
+		                            if(decl.declarations.length === 1) {
+		                                return editorContext.setText('', decl.range[0], decl.range[1]);
+		                            }
+	                                var idx = indexOf(decl.declarations, declr);
+	                                if(idx > -1) {
+	                                    return removeIndexedItem(decl.declarations, idx, editorContext);
+	                                }
+		                        }
+		                    }
+		                }
+		                return null;
+		            });
+		        },
+		        /**
+		         * @callback
+		         */
+		        "no-unused-vars-unused-funcdecl": function(editorContext, context, astManager) {
+		            return astManager.getAST(editorContext).then(function(ast) {
+		                var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+		                if(node && node.parents && node.parents.length > 0) {
+		                    var decl = node.parents.pop();
+		                    if(decl.type === 'FunctionDeclaration') {
+		                        return editorContext.setText('', decl.range[0], decl.range[1]);
+		                    }
+		                }
+		                return null;
+		            });
+		        },
+		        /** 
+		         * alternate id for the no-unsed-params linting fix 
+		         * @callback
+		         */
+		        "no-unused-params-expr": function(editorContext, context, astManager) {
+		        	function updateCallback(node, ast, comments) {
+		                if(Array.isArray(comments)) {
+		                    //attach it to the last one
+		                    var comment = comments[comments.length-1];
+		                    if(comment.type === 'Block') {
+		                        var valueend = comment.range[0]+comment.value.length+getDocOffset(ast.source, comment.range[0]);
+		                        var start = getLineStart(ast.source, valueend);
+		                        var indent = computeIndent(ast.source, start);
+		                        var fix = "* @callback\n"+indent; //$NON-NLS-1$
+		                        /*if(comment.value.charAt(valueend) !== '\n') {
+		                            fix = '\n' + fix;
+		                        }*/
+		                        return editorContext.setText(fix, valueend-1, valueend-1);
+		                    }
+		                }
+		                start = getLineStart(ast.source, node.range[0]);
+		                indent = computeIndent(ast.source, start);
+		                return editorContext.setText("/**\n"+indent+" * @callback\n"+indent+" */\n"+indent, node.range[0], node.range[0]); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		        	}
+		            return astManager.getAST(editorContext).then(function(ast) {
+		                var node = Finder.findNode(context.annotation.start, ast, {parents:true});
+		                if(node && node.parents && node.parents.length > 0) {
+		                    var func = node.parents.pop();
+		                    var p = node.parents.pop();
+		                    var promise;
+		                    switch(p.type) {
+		                    	case 'Property': {
+		                    		if(!hasDocTag(['@callback', '@public'], p) && !hasDocTag(['@callback', '@public'], p.key)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+		                    			promise = updateCallback(p, ast, p.leadingComments ? p.leadingComments : p.key.leadingComments);
+		                			}
+		                    		break;
+		                    	}
+		                    	case 'AssignmentExpression': {
+		                    		var left = p.left;
+		                    		if(left.type === 'MemberExpression' && !hasDocTag(['@callback', '@public'], left)) { //$NON-NLS-1$ //$NON-NLS-2$
+						        		promise = updateCallback(left, ast, left.leadingComments);
+						        	} else if(left.type === 'Identifier' && !hasDocTag(['@callback', '@public'], left)) { //$NON-NLS-1$ //$NON-NLS-2$
+						        		promise = updateCallback(p.left, ast, left.leadingComments);	        		
+						        	}
+		                			break;
+		                    	}
+		                    	case 'VariableDeclarator': {
+		                    		var oldp = p;
+		                			p = node.parents.pop();
+		                			if(p.declarations[0].range[0] === oldp.range[0] && p.declarations[0].range[1] === oldp.range[1]) {
+		                				//insert at the var keyword level to not mess up the code
+		                				promise = updateCallback(p, ast, oldp.id.leadingComments);
+		                			} else if(!hasDocTag(['@callback', '@public'], oldp.id)) { //$NON-NLS-1$ //$NON-NLS-2$
+		                    			promise = updateCallback(oldp, ast, oldp.id.leadingComments);
+		                			} 
+		                			
+		                    		break;
+		                    	}
+		                    }
+		                    if(!promise && !hasDocTag(['@callback', '@public'], func)) { //$NON-NLS-1$ //$NON-NLS-2$
+		                        return editorContext.setText("/* @callback */ ", func.range[0], func.range[0]); //$NON-NLS-1$
+		                    }
+		                }
+		                return promise;
+		            });
+		        },
+		        /** 
+		         * fix for use-isnan linting rule
+		         * @callback
+		         */
+		       "use-isnan": function(editorContext, context, astManager) {
+		       		return astManager.getAST(editorContext).then(function(ast) {
+			       		return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation){
+			       			var node = Finder.findNode(currentAnnotation.start, ast, {parents:true});
+			                if(node && node.parents && node.parents.length > 0) {
+			                    var bin = node.parents.pop();
+			                    if(bin.type === 'BinaryExpression') {
+			                    	var tomove;
+			                    	if(bin.left.type === 'Identifier' && bin.left.name === 'NaN') {
+			                    		tomove = bin.right;
+			                    	} else if(bin.right.type === 'Identifier' && bin.right.name === 'NaN') {
+			                    		tomove = bin.left;
+			                    	}
+			                    	if(tomove) {
+				                    	var src = ast.source.slice(tomove.range[0], tomove.range[1]);
+				                    	return {
+				                    		text: 'isNaN('+src+')', //$NON-NLS-1$
+				                    		start: bin.range[0],
+				                    		end: bin.range[1]
+				                    	};
+			                    	}
+			                    }
+			                }
+			       		});	
+		       		});
+		       },
+		        /** fix for the semi linting rule */
+		        "semi": function(editorContext, context) {
+		        	return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation){
+			            return {
+			            	text: ';',
+			            	start: currentAnnotation.end,
+			            	end: currentAnnotation.end
+			            };
+		            });
+		        },
+		        /** fix for the unnecessary-nls rule */
+		        "unnecessary-nls": function(editorContext, context, astManager){
+		        	return astManager.getAST(editorContext).then(function(ast) {
+			        	return applySingleFixToAll(editorContext, context.annotation, context.annotations, function(currentAnnotation){
+			        		var comment = Finder.findComment(currentAnnotation.start + 2, ast); // Adjust for leading //
+			        		var nlsTag = currentAnnotation.data.nlsComment; // We store the nls tag in the annotation
+			        		if (comment && comment.type.toLowerCase() === 'line' && nlsTag){
+								var index = comment.value.indexOf(nlsTag);
+								// Check if we can delete the whole comment
+								if (index > 0){
+									var start = currentAnnotation.start;
+									while (ast.source.charAt(start-1) === ' ' || ast.source.charAt(start-1) === '\t'){
+										start--;
+									}
+									return {
+										text: '',
+										start: start,
+										end: currentAnnotation.end
+									};
+								} else if (index === 0){
+									var newComment = comment.value.substring(index+nlsTag.length);
+									start = currentAnnotation.start;
+									var end = currentAnnotation.end;
+									if (!newComment.match(/^(\s*|\s*\/\/.*)$/)){
+										start += 2; // Only remove leading // if additional comments start with another //
+									} else {
+										while (ast.source.charAt(start-1) === ' ' || ast.source.charAt(start-1) === '\t'){
+											start--;
+										}
+									}
+									if (newComment.match(/^\s*$/)){
+										end = comment.range[1]; // If there is only whitespace left in the comment, delete it entirely
+										while (ast.source.charAt(start-1) === ' ' || ast.source.charAt(start-1) === '\t'){
+											start--;
+										}
+									}
+									return {
+										text: '',
+										start: start,
+										end: end
+									};
+								}
+							}
+			        		return null;
+						});
+	        		});
+	    		}
+			}
+		});
+		
+		JavaScriptQuickfixes.prototype.constructor = JavaScriptQuickfixes;
+		
+		Objects.mixin(JavaScriptQuickfixesExternalLib.prototype, /** @lends javascript.JavaScriptQuickfixes.prototype*/ {
+			retrieveFix : function(ruleID) {
+					return this.fixes[ruleID].bind(this);
+			},
+			fixes : {
+					"radix": function(data) {
+						text = data["text"];
+						currentAnnotation = data["annotation"];
+						ast = this.astManager.parse(text, 'unknown');
+						var node = Finder.findNode(currentAnnotation.start, ast, {parents:true});
+						if(node && node.type === 'Identifier') {
+							node = node.parents[node.parents.length-1];
+							if(node.type === 'CallExpression' && Array.isArray(node.arguments)) {
+								var arg = node.arguments[node.arguments.length-1];
+								return {
+									text: ", 10", //$NON-NLS-1$
+									start: arg.range[1],
+									end: arg.range[1]
+								};
+							}
+						}
+						return {};
+					},
+					"missing-nls": function(data){
+						text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+			        		
+		                if(annotation.data && typeof annotation.data.indexOnLine === 'number') {
+			                // Insert the correct non nls comment
+			                var end = getLineEnd(ast.source, annotation.end);
+			                // indexOnLine starts at 0, non-nls comments start at one
+			                var comment = " //$NON-NLS-" + (annotation.data.indexOnLine + 1) + "$"; //$NON-NLS-1$
+			                return {
+			                	text: comment,
+			                	start: end,
+			                	end: end
+			                };
+		                }
+			        },
+					"new-parens": function(data) {
+						text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+						var node = Finder.findNode(annotation.start, ast, {parents:true});
+						if(node && node.type === 'Identifier') {
+							return { "text" : '()', "start" : node.range[1], "end" : node.range[1]}; //$NON-NLS-1$
+						}
+					},
+					"no-debugger" : function(data) {
+						text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+						var end = annotation.end;
+						var tok = Finder.findToken(annotation.end, ast.tokens);
+						if(tok && tok.type === 'Punctuator' && tok.value === ';') {
+							end = tok.range[1];
+						} 
+						return {
+							text: '',
+							start: annotation.start,
+							end: end
+						};
+					},
+					"no-duplicate-case": function(data) {
+						annotation = data["annotation"]
+						var start = annotation.start,
+							groups = [{data: {}, positions: [{offset: start, length: annotation.end-start}]}],
+							linkModel = {groups: groups};
+						return linkModel;
+					},
+					/** 
+					 * fix for the no-empty-block linting rule
+					 * @callback
+					 */
+					"no-empty-block": function(data) {
+			            text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+		                var linestart = getLineStart(text, annotation.start);
+		                var fix = '//TODO empty block'; //$NON-NLS-1$
+		                var indent = computeIndent(text, linestart, true);
+		                fix = '\n' + indent + fix; //$NON-NLS-1$
+		                fix += computePostfix(text, annotation);
+		                return { "text" : fix, "start" : annotation.start+1, "end" : annotation.start+1};
+			        },
+			        /** fix for the no-extra-parens linting rule */
+					"no-extra-parens": function(data) {
+						text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+			            var token = Finder.findToken(annotation.start, ast.tokens);
+			            var openBracket = ast.tokens[token.index-1];
+			            if (openBracket.value === '('){
+			            	var closeBracket = Finder.findToken(annotation.end, ast.tokens);
+			            	if (closeBracket.value === ')'){
+					            return [
+						            {
+						            	text: '',
+						            	start: openBracket.range[0],
+						            	end: openBracket.range[1]
+						            },
+						            {
+						            	text: '',
+						            	start: closeBracket.range[0],
+						            	end: closeBracket.range[1]
+						            }
+				            	];
+			            	}
+		            	}
+		            	return ast.tokens;
+			        },
+					"no-dupe-keys": function(data) {
+						annotation = data["annotation"]
+						var start = annotation.start,
+							groups = [{data: {}, positions: [{offset: start, length: annotation.end-start}]}],
+							linkModel = {groups: groups};
+						return linkModel;
+					},
+					/** 
+			         * fix for the no-fallthrough linting rule
+			         * @callback
+			         */
+			        "no-fallthrough": function(data) {
+			            text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+		                var linestart = getLineStart(text, annotation.start);
+		                var fix = '//$FALLTHROUGH$'; //$NON-NLS-1$
+		                var indent = computeIndent(text, linestart);
+		                fix += computePostfix(text, annotation, indent);
+		                return { "text" : fix, "start" : annotation.start, "end" : annotation.start};
+			        },
+			        /** 
+			         * alternate fix for the no-fallthrough linting rule
+			         * @callback
+			         */
+			        "no-fallthrough-break": function(data) {
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+		                var linestart = getLineStart(text, annotation.start);
+		                var fix = 'break;'; //$NON-NLS-1$
+		                var indent = computeIndent(text, linestart);
+		                fix += computePostfix(text, annotation, indent);
+		                return { "text" : fix, "start" : annotation.start, "end" : annotation.start};
+			        },
+			        /** 
+			         * for for the no-reserved-keys linting rule
+			         * @callback
+			         */
+			        "no-reserved-keys": function(data) {
+			       		text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+	       				var node = Finder.findNode(annotation.start, ast, {parents:true});
+		                if(node && node.type === 'Identifier') {
+			                return {
+			                	text: '"'+node.name+'"', //$NON-NLS-2$ //$NON-NLS-1$
+			                	start: node.range[0],
+			                	end: node.range[1]
+			                };
+						}
+			        },
+					"no-self-assign": function(data) {
+						text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+						var node = Finder.findNode(annotation.start, ast, {parents:true});
+						if(node) {
+							var p = node.parents[node.parents.length-1];
+							if(p.type === 'AssignmentExpression') {
+								var end = p.range[1];
+								var tok = Finder.findToken(end, ast.tokens);
+								if(tok) {
+									//we want the next one, ignoring whitespace
+									if(tok &&  tok.type === 'Punctuator' && tok.value === ';') {
+										end = tok.range[1]; //clean up trailing semicolons
+									}
+									tok = ast.tokens[tok.index+1];
+									if(tok &&  tok.type === 'Punctuator' && tok.value === ';') {
+										end = tok.range[1]; //clean up trailing semicolons
+									}
+								}
+								return {
+									text: '',
+									start: p.range[0],
+									end: end
+								};
+							}
+						}
+					},
+					"no-self-assign-rename": function(data) {
+						text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+						var node = Finder.findNode(annotation.end, ast);
+						if(node && node.type === 'Identifier') {
+							var start = node.range[0],
+								groups = [{data: {}, positions: [{offset: start, length: node.range[1]-start}]}],
+								linkModel = {groups: groups};
+							return linkModel;
+						}
+					},
+					/** 
+			         * fix for the no-sparse-arrays linting rule
+			         * @callback
+			         */
+			        "no-sparse-arrays": function(data) {
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+		                var node = Finder.findNode(annotation.start, ast, {parents:true});
+		                if(node && node.type === 'ArrayExpression') {
+		                    var model = new TextModel.TextModel(ast.source.slice(annotation.start, annotation.end));
+		                    var len = node.elements.length;
+		                    var idx = len-1;
+		                    var item = node.elements[idx];
+		                    if(item === null) {
+		                        var end = Finder.findToken(node.range[1], ast.tokens);
+		                        if(end.value !== ']') {
+		                            //for a follow-on token we want the previous - i.e. a token immediately following the ']' that has no space
+		                            end = ast.tokens[end.index-1];
+		                        }
+		                        //wipe all trailing entries first using the ']' token start as the end
+		                        for(; idx > -1; idx--) {
+		                            item = node.elements[idx];
+		                            if(item !== null) {
+		                                break;
+		                            }
+		                        }
+		                        if(item === null) {
+		                            //whole array is sparse - wipe it
+		                            return { "text" : '', "start" : annotation.start+1, "end" : annotation.end-1};
+		                        }
+		                        model.setText('', item.range[1]-annotation.start, end.range[0]-annotation.start);
+		                    }
+		                    var prev = item;
+		                    for(; idx > -1; idx--) {
+		                        item = node.elements[idx];
+		                        if(item === null || item.range[0] === prev.range[0]) {
+		                            continue;
+		                        }
+		                        model.setText(', ', item.range[1]-annotation.start, prev.range[0]-annotation.start); //$NON-NLS-1$
+		                        prev = item;
+		                    }
+		                    if(item === null && prev !== null) {
+		                        //need to wipe the front of the array
+		                        model.setText('', node.range[0]+1-annotation.start, prev.range[0]-annotation.start);
+		                    }
+		                    return { "text" : model.getText(), "start" : annotation.start, "end" : annotation.end};
+		                }
+		                return null;
+			        },
+			        /** 
+			         * fix for the no-throw-literal linting rule
+			         * @callback
+			         */
+			        "no-throw-literal": function(data) {
+			            text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+		                var node = Finder.findNode(annotation.start, ast, {parents:true});
+		                var source = node.raw || ast.source.slice(node.range[0], node.range[1]);
+		                return { "text" : 'new Error(' + source + ')', "start" : annotation.start, "end" : annotation.end}; //$NON-NLS-1$
+	
+			        },
+					/**
+			         * @callback
+			         */
+			        "no-new-array": function(data) {
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+		       			var node = Finder.findNode(annotation.start, ast, {parents:true});
+		       			if(node && node.parents) {
+		       				var p = node.parents[node.parents.length-1];
+		       				if(p.type === 'CallExpression' || p.type === 'NewExpression') {
+		       					var fix = '';
+		       					if(p.arguments.length > 0) {
+		       						var start = p.arguments[0].range[0], end = p.arguments[p.arguments.length-1].range[1];
+		       						fix += '[' + ast.source.substring(start, end) + ']';
+		       					} else {
+		       						fix += '[]'; //$NON-NLS-1$
+		       					}
+		       					return { "text" : fix, "start" : p.start, "end" : p.end };
+		       				}
+		       			}
+			        },
+					"no-new-wrappers": function(data) {
+						text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+						var node = Finder.findNode(annotation.start, ast, {parents:true});
+						if(node) {
+							var parent = node.parents[node.parents.length-1];
+							if(parent.type === 'NewExpression') {
+								var tok = Finder.findToken(parent.range[0], ast.tokens);
+								if(tok && tok.type === 'Keyword' && tok.value === 'new') {
+									var text = '';
+									var end = tok.range[1],
+										start = tok.range[0],
+										prev = ast.tokens[tok.index-1];
+									if(prev.range[1] < tok.range[0]) {
+										end = node.range[0];
+										start = prev.range[1]+1;
+									} else if(node.range[0] - end > 1) {
+										end += node.range[0] - end - 1;
+									}
+									if(parent.callee.name === 'Math' || parent.callee.name === 'JSON') {
+										//also get rid of the params - these two have no functional equivilent
+										end = parent.range[1];
+										text = parent.callee.name;
+									}
+									return { "text" : text, "start" : start, "end" : end };
+								}
+							}
+						}	
+					},
+					"no-new-wrappers-literal": function(data) {
+						text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+						var node = Finder.findNode(annotation.start, ast, {parents:true});
+						if(node) {
+							var parent = node.parents[node.parents.length-1];
+							if(parent.type === 'NewExpression') {
+								switch(parent.callee.name) {
+									case 'Math':
+									case 'JSON': {
+										return { "text" : parent.callee.name, "start" : parent.range[0], "end" : parent.range[1]};
+									}
+									case 'String': {
+										var s = '';
+										if(parent.arguments.length > 0) {
+											var str = parent.arguments[0];
+											if(str.type === 'Literal') {
+												s = String(str.value);	
+											} else if(str.type === 'Identifier') {
+												if(str.name === 'undefined') {
+													s = String(undefined);
+												} else if(str.name === 'NaN') {
+													s = String(NaN);
+												} else {
+													s = String(str.name);
+												}
+											}
+										} else {
+											s = String();
+										}
+										return { "text" : '"'+s.toString()+'"', "start" : parent.range[0], "end" : parent.range[1]}; //$NON-NLS-1$ //$NON-NLS-2$
+									}
+									case 'Number': {
+										var nu;
+										if(parent.arguments.length > 0) {
+											var num = parent.arguments[0];
+											if(num.type === 'Literal') {
+												nu = Number(num.value);
+											} else if(num.type === 'Identifier') {
+												if(num.name === 'undefined') {
+													nu = Number(undefined);
+												} else if(num.name === 'NaN') {
+													nu = Number(NaN);
+												} else {
+													nu = Number(num.name);
+												}
+											} else {
+												nu = Number(num);
+											}
+										} else {
+											nu = Number();
+										}
+										return { "text" : nu.toString(), "start" : parent.range[0], "end" : parent.range[1]};
+									}
+									case 'Boolean': {
+										var b;
+										if(parent.arguments.length > 0) {
+											var arg = parent.arguments[0];
+											if(arg.type === 'ObjectExpression') {
+												b = true;
+											} else if(arg.type === 'Literal') {
+												b = Boolean(arg.value);
+											} else if(arg.type === 'Identifier') {
+												if(arg.name === 'undefined') {
+													b = Boolean(undefined);
+												} else if(arg.name === 'NaN') {
+													b = Boolean(NaN);
+												} else {
+													b = Boolean(arg.name);
+												}
+											} else if(arg.type === 'UnaryExpression' && arg.operator === '-' && 
+												arg.argument.type === 'Literal' && typeof arg.argument.value === 'number') {
+												b = false;
+											}
+										} else {
+											b = false;
+										}
+										return { "text" : b.toString(), "start" : parent.range[0], "end" : parent.range[1] };
+									}
+								}
+							}
+						}	
+					},
+					"no-undef": function(data){
+						text = data["text"];
+						annotation = data["annotation"];	
+						function assignLike(node) {
+			                if(node && node.parents && node.parents.length > 0 && node.type === 'Identifier') {
+			                    var parent = node.parents.pop();
+			                    return parent && (parent.type === 'AssignmentExpression' || parent.type === 'UpdateExpression'); 
+			                }
+			                return false;
+		            	}
+		            	var name = /'(.*)'/.exec(annotation.title);
+		            	if(name !== null && typeof name !== 'undefined') {
+		                	ast = this.astManager.parse(text, "unknown");
+	                    	var comment = null;
+	                    	var start = 0;
+	                    	var insert = name[1];
+	                    	var node = Finder.findNode(annotation.start, ast, {parents:true});
+	                    	if(assignLike(node)) {
+	                        	insert += ':true'; //$NON-NLS-1$
+	                    	}
+		                    comment = Finder.findDirective(ast, 'globals'); //$NON-NLS-1$
+		                    if(comment) {
+		                        start = comment.range[0]+2;
+		                        return {"start" : start+comment.value.length, "end" : start+comment.value.length, "text" : insert+" ", }; //$NON-NLS-1$
+		                    }
+	                        var point = getDirectiveInsertionPoint(ast);
+	                    	var linestart = getLineStart(ast.source, point);
+	                    	var indent = computeIndent(ast.source, linestart, false);
+	               			var fix = '/*globals '+insert+' */\n' + indent; //$NON-NLS-1$ //$NON-NLS-2$
+	                        return {"start" : point, "end" : point, "text" : fix};
+		            	}
+		            	return name;
+					},
+					/** 
+			         * alternate id for no-undef-defined linting fix
+			         * @callback
+			         */
+			        "no-undef-defined-inenv": function(data) {
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+			            var name = /'(.*)'/.exec(annotation.title);
+	
+			            if(name !== null && typeof name !== 'undefined') {
+		                    var comment = null;
+		                    var start = 0;
+		                    if(name[1] === 'console') {
+		                        var env = 'node'; //$NON-NLS-1$
+		                    } else {
+		                        env = Finder.findESLintEnvForMember(name[1]);
+		                    }
+		                    if(env) {
+		                        comment = Finder.findDirective(ast, 'eslint-env'); //$NON-NLS-1$
+		                        if(comment) {
+		                            start = getDocOffset(ast.source, comment.range[0]) + comment.range[0];
+		    	                    return editorContext.setText(updateDirective(comment.value, 'eslint-env', env, true), start, start+comment.value.length); //$NON-NLS-1$
+		                        }
+	                            var point = getDirectiveInsertionPoint(ast);
+	                    		var linestart = getLineStart(ast.source, point);
+	                    		var indent = computeIndent(ast.source, linestart, false);
+	               				var fix = '/*eslint-env '+env+' */\n' + indent; //$NON-NLS-1$ //$NON-NLS-2$
+	                            return {"text" : fix, "start" : point, "end" : point};
+		                    }
+			            }
+			            return null;
+			        },
+			        "no-undef-init": function(data) {
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+	
+						var node = Finder.findNode(annotation.start, ast, {parents:true});
+						if(node) {
+							var p = node.parents[node.parents.length-1];
+							if(p.type === 'VariableDeclarator') {
+								return {
+									text: '',
+									start: p.id.range[1],
+									end: p.range[1]
+								};									
+							}
+						}
+					},
+					/** 
+			         * fix for the no-unused-params linting rule 
+			         * @callback
+			         */
+			        "no-unused-params": function(data) {
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+		                var node = Finder.findNode(annotation.start, ast, {parents:true});
+		                if(node) {
+		                    var fixes = [];
+		                    var parent = node.parents.pop();
+		                    var paramindex = -1;
+		                    for(var i = 0; i < parent.params.length; i++) {
+		                        var p = parent.params[i];
+		                        if(node.range[0] === p.range[0] && node.range[1] === p.range[1]) {
+		                            paramindex = i;
+		                            break;
+		                        }
+		                    }
+		                    var fix = removeIndexedItemExternalLib(parent.params, paramindex);
+		                    if(fix) {
+		                        fixes.push(fix);
+		                    }
+		                    switch(parent.type) {
+		                        case 'FunctionExpression': {
+		                            var funcparent = node.parents.pop();
+		                            if(funcparent.type === 'CallExpression' && (funcparent.callee.name === 'define' || funcparent.callee.name === 'require')) {
+		                                var args = funcparent.arguments;
+		                                for(i = 0; i < args.length; i++) {
+		                                    var arg = args[i];
+		                                    if(arg.type === 'ArrayExpression') {
+		                                        fix = removeIndexedItemExternalLib(arg.elements, paramindex);
+		                                        if(fix) {
+		                                            fixes.push(fix);
+		                                        }
+		                                        break;
+		                                    }
+		                                }
+		                            } else if(funcparent.type === 'Property' && funcparent.key.leadingComments && funcparent.key.leadingComments.length > 0) {
+		                                fix = updateDocExternalLib(funcparent.key, ast.source, parent.params[paramindex].name);
+		                                if(fix) {
+		                                    fixes.push(fix);
+		                                }
+		                            }
+		                            break;
+		                        }
+		                        case 'FunctionDeclaration': {
+		                           fix = updateDocExternalLib(parent, ast.source, parent.params[paramindex].name);
+		                           if(fix) {
+		                               fixes.push(fix);
+		                           }
+		                           break;
+		                        }
+		                    }
+		                    return fixes;
+		                }
+		                return null;
+			        },
+			        /** 
+			         * alternate id for the no-unsed-params linting fix 
+			         * @callback
+			         */
+			        "no-unused-params-expr": function(data) {
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+			        	function updateCallback(node, ast, comments) {
+			                if(Array.isArray(comments)) {
+			                    //attach it to the last one
+			                    var comment = comments[comments.length-1];
+			                    if(comment.type === 'Block') {
+			                        var valueend = comment.range[0]+comment.value.length+getDocOffset(ast.source, comment.range[0]);
+			                        var start = getLineStart(ast.source, valueend);
+			                        var indent = computeIndent(ast.source, start);
+			                        var fix = "* @callback\n"+indent; //$NON-NLS-1$
+			                        /*if(comment.value.charAt(valueend) !== '\n') {
+			                            fix = '\n' + fix;
+			                        }*/
+			                        return {"text" : fix, "start" : valueend-1, "end" : valueend-1};
+			                    }
+			                }
+			                start = getLineStart(ast.source, node.range[0]);
+			                indent = computeIndent(ast.source, start);
+			                return { "text": "/**\n"+indent+" * @callback\n"+indent+" */\n"+indent, "start" : node.range[0], "end" : node.range[0]}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			        	}
+		                var node = Finder.findNode(annotation.start, ast, {parents:true});
+		                if(node && node.parents && node.parents.length > 0) {
+		                    var func = node.parents.pop();
+		                    var p = node.parents.pop();
+		                    var fix;
+		                    switch(p.type) {
+		                    	case 'Property': {
+		                    		if(!hasDocTag(['@callback', '@public'], p) && !hasDocTag(['@callback', '@public'], p.key)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+		                    			fix = updateCallback(p, ast, p.leadingComments ? p.leadingComments : p.key.leadingComments);
+		                			}
+		                    		break;
+		                    	}
+		                    	case 'AssignmentExpression': {
+		                    		var left = p.left;
+		                    		if(left.type === 'MemberExpression' && !hasDocTag(['@callback', '@public'], left)) { //$NON-NLS-1$ //$NON-NLS-2$
+						        		fix = updateCallback(left, ast, left.leadingComments);
+						        	} else if(left.type === 'Identifier' && !hasDocTag(['@callback', '@public'], left)) { //$NON-NLS-1$ //$NON-NLS-2$
+						        		fix = updateCallback(p.left, ast, left.leadingComments);	        		
+						        	}
+		                			break;
+		                    	}
+		                    	case 'VariableDeclarator': {
+		                    		var oldp = p;
+		                			p = node.parents.pop();
+		                			if(p.declarations[0].range[0] === oldp.range[0] && p.declarations[0].range[1] === oldp.range[1]) {
+		                				//insert at the var keyword level to not mess up the code
+		                				fix = updateCallback(p, ast, oldp.id.leadingComments);
+		                			} else if(!hasDocTag(['@callback', '@public'], oldp.id)) { //$NON-NLS-1$ //$NON-NLS-2$
+		                    			fix = updateCallback(oldp, ast, oldp.id.leadingComments);
+		                			} 
+		                			
+		                    		break;
+		                    	}
+		                    }
+		                    if(!fix && !hasDocTag(['@callback', '@public'], func)) { //$NON-NLS-1$ //$NON-NLS-2$
+		                        return {"text" : "/* @callback */ ", "start": func.range[0], "end" : func.range[0]}; //$NON-NLS-1$
+		                    }
+		                }
+		                return fix;
+					},
+					/** 
+			         * fix for use-isnan linting rule
+			         * @callback
+			         */
+			        "use-isnan": function(data) {
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+			       		
+			       		
+		       			var node = Finder.findNode(annotation.start, ast, {parents:true});
+		                if(node && node.parents && node.parents.length > 0) {
+		                    var bin = node.parents.pop();
+		                    if(bin.type === 'BinaryExpression') {
+		                    	var tomove;
+		                    	if(bin.left.type === 'Identifier' && bin.left.name === 'NaN') {
+		                    		tomove = bin.right;
+		                    	} else if(bin.right.type === 'Identifier' && bin.right.name === 'NaN') {
+		                    		tomove = bin.left;
+		                    	}
+		                    	if(tomove) {
+			                    	var src = ast.source.slice(tomove.range[0], tomove.range[1]);
+			                    	return {
+			                    		text: 'isNaN('+src+')', //$NON-NLS-1$
+			                    		start: bin.range[0],
+			                    		end: bin.range[1]
+			                    	};
+		                    	}
+		                    }
+		                }
+			        },
+			        /**
+			         * @callback
+			         */
+			        "no-unused-vars-unused": function(data) {
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+			       		
+		                var node = Finder.findNode(annotation.start, ast, {parents:true});
+		                if(node && node.parents && node.parents.length > 0) {
+		                    var declr = node.parents.pop();
+		                    if(declr.type === 'VariableDeclarator') {
+		                        var decl = node.parents.pop();
+		                        if(decl.type === 'VariableDeclaration') {
+		                            if(decl.declarations.length === 1) {
+		                                return {"start" : decl.range[0], "end" : decl.range[1]};
+		                            }
+	                                var idx = indexOf(decl.declarations, declr);
+	                                if(idx > -1) {
+	                                    return removeIndexedItemExternalLib(decl.declarations, idx, editorContext);
+	                                }
+		                        }
+		                    }
+		                }
+		                return null;
+			        },
+			        /**
+			         * @callback
+			         */
+			        "no-unused-vars-unread": function(data) {
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+			       		
+		                var node = Finder.findNode(annotation.start, ast, {parents:true});
+		                if(node && node.parents && node.parents.length > 0) {
+		                    var declr = node.parents.pop();
+		                    if(declr.type === 'VariableDeclarator') {
+		                        var decl = node.parents.pop();
+		                        if(decl.type === 'VariableDeclaration') {
+		                            if(decl.declarations.length === 1) {
+		                                return {"start" : decl.range[0], "end" : decl.range[1]};
+		                            }
+	                                var idx = indexOf(decl.declarations, declr);
+	                                if(idx > -1) {
+	                                    return removeIndexedItemExternalLib(decl.declarations, idx, editorContext);
+	                                }
+		                        }
+		                    }
+		                }
+		                return null;
+			        },
+			        /**
+			         * @callback
+			         */
+			        "no-unused-vars-unused-funcdecl": function(data) {
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+			       		
+		                var node = Finder.findNode(annotation.start, ast, {parents:true});
+		                if(node && node.parents && node.parents.length > 0) {
+		                    var decl = node.parents.pop();
+		                    if(decl.type === 'FunctionDeclaration') {
+		                        return { "start" : decl.range[0], "end" : decl.range[1]};
+		                    }
+		                }
+		                return null;
+			        },
+			        /** fix for the unnecessary-nls rule */
+			        "unnecessary-nls": function(data){
+			        	text = data["text"];
+						annotation = data["annotation"];
+						ast = this.astManager.parse(text, "unknown");
+			       		
+			        	
+		        		var comment = Finder.findComment(annotation.start + 2, ast); // Adjust for leading //
+		        		var nlsTag = annotation.data.nlsComment; // We store the nls tag in the annotation
+		        		if (comment && comment.type.toLowerCase() === 'line' && nlsTag){
+							var index = comment.value.indexOf(nlsTag);
+							// Check if we can delete the whole comment
+							if (index > 0){
+								var start = annotation.start;
+								while (ast.source.charAt(start-1) === ' ' || ast.source.charAt(start-1) === '\t'){
+									start--;
+								}
+								return {
+									text: '',
+									start: start,
+									end: annotation.end
+								};
+							} else if (index === 0){
+								var newComment = comment.value.substring(index+nlsTag.length);
+								start = annotation.start;
+								var end = annotation.end;
+								if (!newComment.match(/^(\s*|\s*\/\/.*)$/)){
+									start += 2; // Only remove leading // if additional comments start with another //
+								} else {
+									while (ast.source.charAt(start-1) === ' ' || ast.source.charAt(start-1) === '\t'){
+										start--;
+									}
+								}
+								if (newComment.match(/^\s*$/)){
+									end = comment.range[1]; // If there is only whitespace left in the comment, delete it entirely
+									while (ast.source.charAt(start-1) === ' ' || ast.source.charAt(start-1) === '\t'){
+										start--;
+									}
+								}
+								return {
+									text: '',
+									start: start,
+									end: end
+								};
+							}
+						}
+		        		return null;
+		    		}
+			}
+		})
+	
+	 	JavaScriptQuickfixesExternalLib.prototype.constructor = JavaScriptQuickfixesExternalLib;
+		return {
+			JavaScriptQuickfixes: JavaScriptQuickfixes,
+			JavaScriptQuickfixesExternalLib : JavaScriptQuickfixesExternalLib
+		};
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ },
+/* 91 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*******************************************************************************
+	 * @license
+	 * Copyright (c) 2010, 2012 IBM Corporation and others.
+	 * All rights reserved. This program and the accompanying materials are made 
+	 * available under the terms of the Eclipse Public License v1.0 
+	 * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
+	 * License v1.0 (http://www.eclipse.org/org/documents/edl-v10.html). 
+	 * 
+	 * Contributors: 
+	 *		Felipe Heidrich (IBM Corporation) - initial API and implementation
+	 *		Silenio Quarti (IBM Corporation) - initial API and implementation
+	 ******************************************************************************/
+	 
+	/*eslint-env browser, amd*/
+	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(92), __webpack_require__(93), __webpack_require__(94)], __WEBPACK_AMD_DEFINE_RESULT__ = function(mEventTarget, mRegex, util) { //$NON-NLS-2$  //$NON-NLS-1$ //$NON-NLS-0$
+	
+		/**
+		 * Constructs a new TextModel with the given text and default line delimiter.
+		 *
+		 * @param {String} [text=""] the text that the model will store
+		 * @param {String} [lineDelimiter=platform delimiter] the line delimiter used when inserting new lines to the model.
+		 *
+		 * @name orion.editor.TextModel
+		 * @class The TextModel is an interface that provides text for the view. Applications may
+		 * implement the TextModel interface to provide a custom store for the view content. The
+		 * view interacts with its text model in order to access and update the text that is being
+		 * displayed and edited in the view. This is the default implementation.
+		 * <p>
+		 * <b>See:</b><br/>
+		 * {@link orion.editor.TextView}<br/>
+		 * {@link orion.editor.TextView#setModel}
+		 * </p>
+		 * @borrows orion.editor.EventTarget#addEventListener as #addEventListener
+		 * @borrows orion.editor.EventTarget#removeEventListener as #removeEventListener
+		 * @borrows orion.editor.EventTarget#dispatchEvent as #dispatchEvent
+		 */
+		function TextModel(text, lineDelimiter) {
+			this._lastLineIndex = -1;
+			this._text = [""];
+			this._lineOffsets = [0];
+			this.setText(text);
+			this.setLineDelimiter(lineDelimiter);
+		}
+	
+		TextModel.prototype = /** @lends orion.editor.TextModel.prototype */ {
+			/**
+			 * Destroys this text model.
+			 */
+			destroy: function() {
+			},
+			/**
+			 * @class This object describes the options to use while finding occurrences of a string in a text model.
+			 * @name orion.editor.FindOptions
+			 *
+			 * @property {String} string the search string to be found.
+			 * @property {Boolean} [regex=false] whether or not the search string is a regular expression.
+			 * @property {Boolean} [wrap=false] whether or not to wrap search.
+			 * @property {Boolean} [wholeWord=false] whether or not to search only whole words.
+			 * @property {Boolean} [caseInsensitive=false] whether or not search is case insensitive.
+			 * @property {Boolean} [reverse=false] whether or not to search backwards.
+			 * @property {Number} [start=0] The start offset to start searching
+			 * @property {Number} [end=charCount] The end offset of the search. Used to search in a given range.
+			 */
+			/**
+			 * @class This object represents a find occurrences iterator.
+			 * <p>
+			 * <b>See:</b><br/>
+			 * {@link orion.editor.TextModel#find}<br/>
+			 * </p>		 
+			 * @name orion.editor.FindIterator
+			 * 
+			 * @property {Function} hasNext Determines whether there are more occurrences in the iterator.
+			 * @property {Function} next Returns the next matched range {start,end} in the iterator.
+			 */	
+			/**
+			 * Finds occurrences of a string in the text model.
+			 *
+			 * @param {orion.editor.FindOptions} options the search options
+			 * @return {orion.editor.FindIterator} the find occurrences iterator.
+			 */
+			find: function(options) {
+				if (this._text.length > 1) {
+					this._text = [this._text.join("")];
+				}
+				var string = options.string;
+				var regex = options.regex;
+				var pattern = string;
+				var flags = "";
+				var caseInsensitive = options.caseInsensitive;
+				if (pattern) {
+					if (regex) {
+						var parsed = mRegex.parse(pattern);
+						if (parsed) {
+							pattern = parsed.pattern;
+							flags = parsed.flags;
+						}
+					} else {
+						pattern = string.replace(/([\\$\^*\/+?\.\(\)|{}\[\]])/g, "\\$&"); //$NON-NLS-0$
+						/*
+						* Bug in JS RegEx. In a Turkish locale, dotless i (u0131) capitalizes to I (u0049) and i (u0069) 
+						* capitalizes to dot I (u0130). The JS RegEx does not match correctly the Turkish i's in case
+						* insensitive mode. The fix is to detect the presence of Turkish i's in the search pattern and 
+						* to modify the pattern to search for both upper and lower case.
+						*/
+						if (caseInsensitive) {  //$NON-NLS-1$ //$NON-NLS-0$
+							pattern = pattern.replace(/[iI\u0130\u0131]/g, "[Ii\u0130\u0131]"); //$NON-NLS-0$
+						}
+					}
+				}
+				var current = null, skip;
+				if (pattern) {
+					var reverse = options.reverse;
+					var wrap = options.wrap;
+					var wholeWord = options.wholeWord;
+					var start = options.start || 0;
+					var end = options.end;
+					var isRange = (end !== null && end !== undefined);
+					if (flags.indexOf("g") === -1) { flags += "g"; } //$NON-NLS-1$ //$NON-NLS-0$
+					if (flags.indexOf("m") === -1) { flags += "m"; } //$NON-NLS-1$ //$NON-NLS-0$
+					if (caseInsensitive) {
+						if (flags.indexOf("i") === -1) { flags += "i"; } //$NON-NLS-1$ //$NON-NLS-0$
+					}
+					if (wholeWord) {
+						pattern = "\\b" + pattern + "\\b"; //$NON-NLS-1$ //$NON-NLS-0$
+					}
+					var text = this._text[0], result, lastIndex, offset = 0;
+					if (isRange) {
+						var s = start < end ? start : end;
+						var e = start < end ? end : start;
+						text = text.substring(s, e);
+						offset = s;
+					}
+					var re = new RegExp(pattern, flags);
+					if (reverse) {
+						skip = function() {
+							var match = null;
+							re.lastIndex = 0;
+							while (true) {
+								lastIndex = re.lastIndex;
+								result = re.exec(text);
+								if (lastIndex === re.lastIndex) {
+									return null;
+								}
+								if (result) {
+									if (result.index + offset < start) {
+										match = {start: result.index + offset, end: re.lastIndex + offset};
+									} else {
+										if (!wrap || match) {
+											break;
+										}
+										start = text.length + offset;
+										match = {start: result.index + offset, end: re.lastIndex + offset};
+									}
+								} else {
+									break;
+								}
+							}
+							if (match) { start = match.start; }
+							return match;
+						};
+					} else {
+						if (!isRange) {
+							re.lastIndex = start;
+						}
+						skip = function() {
+							while (true) {
+								lastIndex = re.lastIndex;
+								result = re.exec(text);
+								if (lastIndex === re.lastIndex) {
+									return null;
+								}
+								if (result) {
+									return {start: result.index + offset, end: re.lastIndex + offset};
+								}
+								if (lastIndex !== 0) {
+									if (wrap) {
+										continue;
+									}
+								}
+								break;
+							}
+							return null;
+						};
+					}
+					current = skip();
+				}
+				return {
+					next: function() {
+						var result = current;
+						if (result) { current = skip(); }
+						return result;					
+					},
+					hasNext: function() {
+						return current !== null;
+					}
+				};
+			},
+			/**
+			 * Returns the number of characters in the model.
+			 *
+			 * @returns {Number} the number of characters in the model.
+			 */
+			getCharCount: function() {
+				var count = 0;
+				for (var i = 0; i<this._text.length; i++) {
+					count += this._text[i].length;
+				}
+				return count;
+			},
+			/**
+			 * Returns the text of the line at the given index.
+			 * <p>
+			 * The valid indices are 0 to line count exclusive.  Returns <code>null</code> 
+			 * if the index is out of range. 
+			 * </p>
+			 *
+			 * @param {Number} lineIndex the zero based index of the line.
+			 * @param {Boolean} [includeDelimiter=false] whether or not to include the line delimiter. 
+			 * @returns {String} the line text or <code>null</code> if out of range.
+			 *
+			 * @see orion.editor.TextModel#getLineAtOffset
+			 */
+			getLine: function(lineIndex, includeDelimiter) {
+				var lineCount = this.getLineCount();
+				if (!(0 <= lineIndex && lineIndex < lineCount)) {
+					return null;
+				}
+				var start = this._lineOffsets[lineIndex];
+				if (lineIndex + 1 < lineCount) {
+					var text = this.getText(start, this._lineOffsets[lineIndex + 1]);
+					if (includeDelimiter) {
+						return text;
+					}
+					var end = text.length, c;
+					while (((c = text.charCodeAt(end - 1)) === 10) || (c === 13)) {
+						end--;
+					}
+					return text.substring(0, end);
+				} else {
+					return this.getText(start); 
+				}
+			},
+			/**
+			 * Returns the line index at the given character offset.
+			 * <p>
+			 * The valid offsets are 0 to char count inclusive. The line index for
+			 * char count is <code>line count - 1</code>. Returns <code>-1</code> if
+			 * the offset is out of range.
+			 * </p>
+			 *
+			 * @param {Number} offset a character offset.
+			 * @returns {Number} the zero based line index or <code>-1</code> if out of range.
+			 */
+			getLineAtOffset: function(offset) {
+				var charCount = this.getCharCount();
+				if (!(0 <= offset && offset <= charCount)) {
+					return -1;
+				}
+				var lineCount = this.getLineCount();
+				if (offset === charCount) {
+					return lineCount - 1; 
+				}
+				var lineStart, lineEnd;
+				var index = this._lastLineIndex;
+				if (0 <= index && index < lineCount) {
+					lineStart = this._lineOffsets[index];
+					lineEnd = index + 1 < lineCount ? this._lineOffsets[index + 1] : charCount;
+					if (lineStart <= offset && offset < lineEnd) {
+						return index;
+					}
+				}
+				var high = lineCount;
+				var low = -1;
+				while (high - low > 1) {
+					index = Math.floor((high + low) / 2);
+					lineStart = this._lineOffsets[index];
+					lineEnd = index + 1 < lineCount ? this._lineOffsets[index + 1] : charCount;
+					if (offset <= lineStart) {
+						high = index;
+					} else if (offset < lineEnd) {
+						high = index;
+						break;
+					} else {
+						low = index;
+					}
+				}
+				this._lastLineIndex = high;
+				return high;
+			},
+			/**
+			 * Returns the number of lines in the model.
+			 * <p>
+			 * The model always has at least one line.
+			 * </p>
+			 *
+			 * @returns {Number} the number of lines.
+			 */
+			getLineCount: function() {
+				return this._lineOffsets.length;
+			},
+			/**
+			 * Returns the line delimiter that is used by the view
+			 * when inserting new lines. New lines entered using key strokes 
+			 * and paste operations use this line delimiter.
+			 *
+			 * @return {String} the line delimiter that is used by the view when inserting new lines.
+			 */
+			getLineDelimiter: function() {
+				return this._lineDelimiter;
+			},
+			/**
+			 * Returns the end character offset for the given line. 
+			 * <p>
+			 * The end offset is not inclusive. This means that when the line delimiter is included, the 
+			 * offset is either the start offset of the next line or char count. When the line delimiter is
+			 * not included, the offset is the offset of the line delimiter.
+			 * </p>
+			 * <p>
+			 * The valid indices are 0 to line count exclusive.  Returns <code>-1</code> 
+			 * if the index is out of range. 
+			 * </p>
+			 *
+			 * @param {Number} lineIndex the zero based index of the line.
+			 * @param {Boolean} [includeDelimiter=false] whether or not to include the line delimiter. 
+			 * @return {Number} the line end offset or <code>-1</code> if out of range.
+			 *
+			 * @see orion.editor.TextModel#getLineStart
+			 */
+			getLineEnd: function(lineIndex, includeDelimiter) {
+				var lineCount = this.getLineCount();
+				if (!(0 <= lineIndex && lineIndex < lineCount)) {
+					return -1;
+				}
+				if (lineIndex + 1 < lineCount) {
+					var end = this._lineOffsets[lineIndex + 1];
+					if (includeDelimiter) {
+						return end;
+					}
+					var text = this.getText(Math.max(this._lineOffsets[lineIndex], end - 2), end);
+					var i = text.length, c;
+					while (((c = text.charCodeAt(i - 1)) === 10) || (c === 13)) {
+						i--;
+					}
+					return end - (text.length - i);
+				} else {
+					return this.getCharCount();
+				}
+			},
+			/**
+			 * Returns the start character offset for the given line.
+			 * <p>
+			 * The valid indices are 0 to line count exclusive.  Returns <code>-1</code> 
+			 * if the index is out of range. 
+			 * </p>
+			 *
+			 * @param {Number} lineIndex the zero based index of the line.
+			 * @return {Number} the line start offset or <code>-1</code> if out of range.
+			 *
+			 * @see orion.editor.TextModel#getLineEnd
+			 */
+			getLineStart: function(lineIndex) {
+				if (!(0 <= lineIndex && lineIndex < this.getLineCount())) {
+					return -1;
+				}
+				return this._lineOffsets[lineIndex];
+			},
+			/**
+			 * Returns the text for the given range.
+			 * <p>
+			 * The end offset is not inclusive. This means that character at the end offset
+			 * is not included in the returned text.
+			 * </p>
+			 *
+			 * @param {Number} [start=0] the zero based start offset of text range.
+			 * @param {Number} [end=char count] the zero based end offset of text range.
+			 *
+			 * @see orion.editor.TextModel#setText
+			 */
+			getText: function(start, end) {
+				if (start === undefined) { start = 0; }
+				if (end === undefined) { end = this.getCharCount(); }
+				if (start === end) { return ""; }
+				var offset = 0, chunk = 0, length;
+				while (chunk<this._text.length) {
+					length = this._text[chunk].length; 
+					if (start <= offset + length) { break; }
+					offset += length;
+					chunk++;
+				}
+				var firstOffset = offset;
+				var firstChunk = chunk;
+				while (chunk<this._text.length) {
+					length = this._text[chunk].length; 
+					if (end <= offset + length) { break; }
+					offset += length;
+					chunk++;
+				}
+				var lastOffset = offset;
+				var lastChunk = chunk;
+	
+				// error check for invalid chunks of text
+				if (firstChunk >= this._text.length || lastChunk >= this._text.length || firstChunk > lastChunk) {
+					return "";
+				}
+				
+				if (firstChunk === lastChunk) {
+					return this._text[firstChunk].substring(start - firstOffset, end - lastOffset);
+				}
+				var beforeText = this._text[firstChunk].substring(start - firstOffset);
+				var afterText = this._text[lastChunk].substring(0, end - lastOffset);
+				return beforeText + this._text.slice(firstChunk+1, lastChunk).join("") + afterText; 
+			},
+			/**
+			 * Notifies all listeners that the text is about to change.
+			 * <p>
+			 * This notification is intended to be used only by the view. Application clients should
+			 * use {@link orion.editor.TextView#event:onModelChanging}.
+			 * </p>
+			 * <p>
+			 * NOTE: This method is not meant to called directly by application code. It is called internally by the TextModel
+			 * as part of the implementation of {@link #setText}. This method is included in the public API for documentation
+			 * purposes and to allow integration with other toolkit frameworks.
+			 * </p>
+			 *
+			 * @param {orion.editor.ModelChangingEvent} modelChangingEvent the changing event
+			 */
+			onChanging: function(modelChangingEvent) {
+				return this.dispatchEvent(modelChangingEvent);
+			},
+			/**
+			 * Notifies all listeners that the text has changed.
+			 * <p>
+			 * This notification is intended to be used only by the view. Application clients should
+			 * use {@link orion.editor.TextView#event:onModelChanged}.
+			 * </p>
+			 * <p>
+			 * NOTE: This method is not meant to called directly by application code. It is called internally by the TextModel
+			 * as part of the implementation of {@link #setText}. This method is included in the public API for documentation
+			 * purposes and to allow integration with other toolkit frameworks.
+			 * </p>
+			 *
+			 * @param {orion.editor.ModelChangedEvent} modelChangedEvent the changed event
+			 */
+			onChanged: function(modelChangedEvent) {
+				return this.dispatchEvent(modelChangedEvent);
+			},
+			/**
+			 * Sets the line delimiter that is used by the view
+			 * when new lines are inserted in the model due to key
+			 * strokes and paste operations. The line delimiter of
+			 * existing lines are unchanged unless the to <code>all</code>
+			 * argument is <code>true</code>.
+			 * <p>
+			 * If lineDelimiter is "auto", the delimiter is computed to be
+			 * the first delimiter found in the current text. If lineDelimiter
+			 * is undefined or if there are no delimiters in the current text, the
+			 * platform delimiter is used.
+			 * </p>
+			 *
+			 * @param {String} lineDelimiter the line delimiter that is used by the view when inserting new lines.
+			 * @param {Boolean} [all=false] whether or not the delimiter of existing lines are changed.
+			 */
+			setLineDelimiter: function(lineDelimiter, all) {
+				if (lineDelimiter === "auto") { //$NON-NLS-0$
+					lineDelimiter = undefined;
+					if (this.getLineCount() > 1) {
+						lineDelimiter = this.getText(this.getLineEnd(0), this.getLineEnd(0, true));
+					}
+				}
+				this._lineDelimiter = lineDelimiter ? lineDelimiter : util.platformDelimiter;
+				if (all) {
+					var lineCount = this.getLineCount();
+					if (lineCount > 1) {
+						var lines = new Array(lineCount);
+						for (var i=0; i<lineCount; i++) {
+							lines[i] = this.getLine(i);
+						}
+						this.setText(lines.join(this._lineDelimiter));
+					}
+				}
+			},
+			/**
+			 * Replaces the text in the given range with the given text.
+			 * <p>
+			 * The end offset is not inclusive. This means that the character at the 
+			 * end offset is not replaced.
+			 * </p>
+			 * <p>
+			 * The text model must notify the listeners before and after the
+			 * the text is changed by calling {@link #onChanging} and {@link #onChanged}
+			 * respectively. 
+			 * </p>
+			 *
+			 * @param {String} [text=""] the new text.
+			 * @param {Number} [start=0] the zero based start offset of text range.
+			 * @param {Number} [end=char count] the zero based end offset of text range.
+			 *
+			 * @see orion.editor.TextModel#getText
+			 */
+			setText: function(text, start, end) {
+				if (text === undefined) { text = ""; }
+				if (start === undefined) { start = 0; }
+				if (end === undefined) { end = this.getCharCount(); }
+				if (start === end && text === "") { return; }
+				var startLine = this.getLineAtOffset(start);
+				var endLine = this.getLineAtOffset(end);
+				var eventStart = start;
+				var removedCharCount = end - start;
+				var removedLineCount = endLine - startLine;
+				var addedCharCount = text.length;
+				var addedLineCount = 0;
+				var lineCount = this.getLineCount();
+				
+				var cr = 0, lf = 0, index = 0;
+				var newLineOffsets = [];
+				while (true) {
+					if (cr !== -1 && cr <= index) { cr = text.indexOf("\r", index); } //$NON-NLS-0$
+					if (lf !== -1 && lf <= index) { lf = text.indexOf("\n", index); } //$NON-NLS-0$
+					if (lf === -1 && cr === -1) { break; }
+					if (cr !== -1 && lf !== -1) {
+						if (cr + 1 === lf) {
+							index = lf + 1;
+						} else {
+							index = (cr < lf ? cr : lf) + 1;
+						}
+					} else if (cr !== -1) {
+						index = cr + 1;
+					} else {
+						index = lf + 1;
+					}
+					newLineOffsets.push(start + index);
+					addedLineCount++;
+				}
+			
+				var modelChangingEvent = {
+					type: "Changing", //$NON-NLS-0$
+					text: text,
+					start: eventStart,
+					removedCharCount: removedCharCount,
+					addedCharCount: addedCharCount,
+					removedLineCount: removedLineCount,
+					addedLineCount: addedLineCount
+				};
+				this.onChanging(modelChangingEvent);
+				
+				//TODO this should be done the loops below to avoid getText()
+				if (newLineOffsets.length === 0) {
+					var startLineOffset = this.getLineStart(startLine), endLineOffset;
+					if (endLine + 1 < lineCount) {
+						endLineOffset = this.getLineStart(endLine + 1);
+					} else {
+						endLineOffset = this.getCharCount();
+					}
+					if (start !== startLineOffset) {
+						text = this.getText(startLineOffset, start) + text;
+						start = startLineOffset;
+					}
+					if (end !== endLineOffset) {
+						text = text + this.getText(end, endLineOffset);
+						end = endLineOffset;
+					}
+				}
+				
+				var changeCount = addedCharCount - removedCharCount;
+				for (var j = startLine + removedLineCount + 1; j < lineCount; j++) {
+					this._lineOffsets[j] += changeCount;
+				}
+				
+				/*
+				* Feature in Chrome.  Chrome exceeds the maximum call stack when calling splice
+				* around 62k arguments. The limit seems to be higher on IE (250K) and Firefox (450k).
+				* The fix is to break the splice in junks of 50k.
+				*/
+				var SPLICE_LIMIT = 50000;
+				var limit = SPLICE_LIMIT, args;
+				if (newLineOffsets.length < limit) {
+					args = [startLine + 1, removedLineCount].concat(newLineOffsets);
+					Array.prototype.splice.apply(this._lineOffsets, args);
+				} else {
+					index = startLine + 1;
+					this._lineOffsets.splice(index, removedLineCount);
+					for (var k = 0; k < newLineOffsets.length; k += limit) {
+						args = [index, 0].concat(newLineOffsets.slice(k, Math.min(newLineOffsets.length, k + limit)));
+						Array.prototype.splice.apply(this._lineOffsets, args);
+						index += limit;
+					}
+				}
+				
+				var offset = 0, chunk = 0, length;
+				while (chunk<this._text.length) {
+					length = this._text[chunk].length; 
+					if (start <= offset + length) { break; }
+					offset += length;
+					chunk++;
+				}
+				var firstOffset = offset;
+				var firstChunk = chunk;
+				while (chunk<this._text.length) {
+					length = this._text[chunk].length; 
+					if (end <= offset + length) { break; }
+					offset += length;
+					chunk++;
+				}
+				var lastOffset = offset;
+				var lastChunk = chunk;
+				var firstText = this._text[firstChunk];
+				var lastText = this._text[lastChunk];
+				var beforeText = firstText.substring(0, start - firstOffset);
+				var afterText = lastText.substring(end - lastOffset);
+				var params = [firstChunk, lastChunk - firstChunk + 1];
+				if (beforeText) { params.push(beforeText); }
+				if (text) { params.push(text); }
+				if (afterText) { params.push(afterText); }
+				Array.prototype.splice.apply(this._text, params);
+				if (this._text.length === 0) { this._text = [""]; }
+				
+				var modelChangedEvent = {
+					type: "Changed", //$NON-NLS-0$
+					start: eventStart,
+					removedCharCount: removedCharCount,
+					addedCharCount: addedCharCount,
+					removedLineCount: removedLineCount,
+					addedLineCount: addedLineCount
+				};
+				this.onChanged(modelChangedEvent);
+			}
+		};
+		mEventTarget.EventTarget.addMixin(TextModel.prototype);
+		
+		return {TextModel: TextModel};
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ },
+/* 92 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*******************************************************************************
+	 * Copyright (c) 2010, 2012 IBM Corporation and others.
+	 * All rights reserved. This program and the accompanying materials are made 
+	 * available under the terms of the Eclipse Public License v1.0 
+	 * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
+	 * License v1.0 (http://www.eclipse.org/org/documents/edl-v10.html). 
+	 * 
+	 * Contributors: 
+	 *		Felipe Heidrich (IBM Corporation) - initial API and implementation
+	 *		Silenio Quarti (IBM Corporation) - initial API and implementation
+	 ******************************************************************************/
+	 
+	/*eslint-env browser, amd*/
+	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function() { //$NON-NLS-0$
+		/** 
+		 * Constructs a new EventTarget object.
+		 * 
+		 * @class 
+		 * @name orion.editor.EventTarget
+		 */
+		function EventTarget() {
+		}
+		/**
+		 * Adds in the event target interface into the specified object.
+		 *
+		 * @param {Object} object The object to add in the event target interface.
+		 */
+		EventTarget.addMixin = function(object) {
+			var proto = EventTarget.prototype;
+			for (var p in proto) {
+				if (proto.hasOwnProperty(p)) {
+					object[p] = proto[p];
+				}
+			}
+		};
+		EventTarget.prototype = /** @lends orion.editor.EventTarget.prototype */ {
+			/**
+			 * Adds an event listener to this event target.
+			 * 
+			 * @param {String} type The event type.
+			 * @param {Function|EventListener} listener The function or the EventListener that will be executed when the event happens. 
+			 * @param {Boolean} [useCapture=false] <code>true</code> if the listener should be trigged in the capture phase.
+			 * 
+			 * @see orion.editor.EventTarget#removeEventListener
+			 */
+			addEventListener: function(type, listener, useCapture) {
+				if (!this._eventTypes) { this._eventTypes = {}; }
+				var state = this._eventTypes[type];
+				if (!state) {
+					state = this._eventTypes[type] = {level: 0, listeners: []};
+				}
+				var listeners = state.listeners;
+				listeners.push({listener: listener, useCapture: useCapture});
+			},
+			/**
+			 * Dispatches the given event to the listeners added to this event target.
+			 * @param {Event} evt The event to dispatch.
+			 */
+			dispatchEvent: function(evt) {
+				var type = evt.type;
+				this._dispatchEvent("pre" + type, evt); //$NON-NLS-0$
+				this._dispatchEvent(type, evt);
+				this._dispatchEvent("post" + type, evt); //$NON-NLS-0$
+			},
+			_dispatchEvent: function(type, evt) {
+				var state = this._eventTypes ? this._eventTypes[type] : null;
+				if (state) {
+					var listeners = state.listeners;
+					try {
+						state.level++;
+						if (listeners) {
+							for (var i=0, len=listeners.length; i < len; i++) {
+								if (listeners[i]) {
+									var l = listeners[i].listener;
+									if (typeof l === "function") { //$NON-NLS-0$
+										l.call(this, evt);
+									} else if (l.handleEvent && typeof l.handleEvent === "function") { //$NON-NLS-0$
+										l.handleEvent(evt);
+									}
+								}
+							}
+						}
+					} finally {
+						state.level--;
+						if (state.compact && state.level === 0) {
+							for (var j=listeners.length - 1; j >= 0; j--) {
+								if (!listeners[j]) {
+									listeners.splice(j, 1);
+								}
+							}
+							if (listeners.length === 0) {
+								delete this._eventTypes[type];
+							}
+							state.compact = false;
+						}
+					}
+				}
+			},
+			/**
+			 * Returns whether there is a listener for the specified event type.
+			 * 
+			 * @param {String} type The event type
+			 * 
+			 * @see orion.editor.EventTarget#addEventListener
+			 * @see orion.editor.EventTarget#removeEventListener
+			 */
+			isListening: function(type) {
+				if (!this._eventTypes) { return false; }
+				return this._eventTypes[type] !== undefined;
+			},		
+			/**
+			 * Removes an event listener from the event target.
+			 * <p>
+			 * All the parameters must be the same ones used to add the listener.
+			 * </p>
+			 * 
+			 * @param {String} type The event type
+			 * @param {Function|EventListener} listener The function or the EventListener that will be executed when the event happens. 
+			 * @param {Boolean} [useCapture=false] <code>true</code> if the listener should be trigged in the capture phase.
+			 * 
+			 * @see orion.editor.EventTarget#addEventListener
+			 */
+			removeEventListener: function(type, listener, useCapture){
+				if (!this._eventTypes) { return; }
+				var state = this._eventTypes[type];
+				if (state) {
+					var listeners = state.listeners;
+					for (var i=0, len=listeners.length; i < len; i++) {
+						var l = listeners[i];
+						if (l && l.listener === listener && l.useCapture === useCapture) {
+							if (state.level !== 0) {
+								listeners[i] = null;
+								state.compact = true;
+							} else {
+								listeners.splice(i, 1);
+							}
+							break;
+						}
+					}
+					if (listeners.length === 0) {
+						delete this._eventTypes[type];
+					}
+				}
+			}
+		};
+		return {EventTarget: EventTarget};
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ },
+/* 93 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*******************************************************************************
+	 * @license
+	 * Copyright (c) 2011, 2013 IBM Corporation and others.
+	 * All rights reserved. This program and the accompanying materials are made 
+	 * available under the terms of the Eclipse Public License v1.0 
+	 * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
+	 * License v1.0 (http://www.eclipse.org/org/documents/edl-v10.html). 
+	 *
+	 * Contributors:
+	 *     IBM Corporation - initial API and implementation
+	 *******************************************************************************/
+	/*eslint-env browser, amd*/
+	/**
+	 * @name orion.regex
+	 * @class Utilities for dealing with regular expressions.
+	 * @description Utilities for dealing with regular expressions.
+	 */
+	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function() { //$NON-NLS-0$
+		/**
+		 * @memberOf orion.regex
+		 * @function
+		 * @static
+		 * @description Escapes regex special characters in the input string.
+		 * @param {String} str The string to escape.
+		 * @returns {String} A copy of <code>str</code> with regex special characters escaped.
+		 */
+		function escape(str) {
+			return str.replace(/([\\$\^*\/+?\.\(\)|{}\[\]])/g, "\\$&"); //$NON-NLS-0$
+		}
+	
+		/**
+		 * @memberOf orion.regex
+		 * @function
+		 * @static
+		 * @description Parses a pattern and flags out of a regex literal string.
+		 * @param {String} str The string to parse. Should look something like <code>"/ab+c/"</code> or <code>"/ab+c/i"</code>.
+		 * @returns {Object} If <code>str</code> looks like a regex literal, returns an object with properties
+		 * <code><dl>
+		 * <dt>pattern</dt><dd>{String}</dd>
+		 * <dt>flags</dt><dd>{String}</dd>
+		 * </dl></code> otherwise returns <code>null</code>.
+		 */
+		function parse(str) {
+			var regexp = /^\s*\/(.+)\/([gim]{0,3})\s*$/.exec(str);
+			if (regexp) {
+				return {
+					pattern : regexp[1],
+					flags : regexp[2]
+				};
+			}
+			return null;
+		}
+	
+		return {
+			escape: escape,
+			parse: parse
+		};
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ },
+/* 94 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_RESULT__;/*******************************************************************************
+	 * @license
+	 * Copyright (c) 2012 IBM Corporation and others.
+	 * All rights reserved. This program and the accompanying materials are made 
+	 * available under the terms of the Eclipse Public License v1.0 
+	 * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
+	 * License v1.0 (http://www.eclipse.org/org/documents/edl-v10.html). 
+	 *
+	 * Contributors: IBM Corporation - initial API and implementation
+	 *******************************************************************************/
+	
+	/*eslint-env browser, amd*/
+	!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+		if (typeof navigator !== "undefined"){
+			var userAgent = navigator.userAgent;
+			var isIE = (userAgent.indexOf("MSIE") !== -1 || userAgent.indexOf("Trident") !== -1) ? document.documentMode : undefined; //$NON-NLS-1$ //$NON-NLS-0$
+			var isFirefox = parseFloat(userAgent.split("Firefox/")[1] || userAgent.split("Minefield/")[1]) || undefined; //$NON-NLS-1$ //$NON-NLS-0$
+			var isOpera = userAgent.indexOf("Opera") !== -1 ? parseFloat(userAgent.split("Version/")[1]) : undefined; //$NON-NLS-0$
+			var isChrome = parseFloat(userAgent.split("Chrome/")[1]) || undefined; //$NON-NLS-0$
+			var isSafari = userAgent.indexOf("Safari") !== -1 && !isChrome; //$NON-NLS-0$
+			var isWebkit = parseFloat(userAgent.split("WebKit/")[1]) || undefined; //$NON-NLS-0$
+			var isAndroid = userAgent.indexOf("Android") !== -1; //$NON-NLS-0$
+			var isIPad = userAgent.indexOf("iPad") !== -1; //$NON-NLS-0$
+			var isIPhone = userAgent.indexOf("iPhone") !== -1; //$NON-NLS-0$
+			var isIOS = isIPad || isIPhone;
+			var isMac = navigator.platform.indexOf("Mac") !== -1; //$NON-NLS-0$
+			var isWindows = navigator.platform.indexOf("Win") !== -1; //$NON-NLS-0$
+			var isLinux = navigator.platform.indexOf("Linux") !== -1; //$NON-NLS-0$
+			var isTouch = typeof document !== "undefined" && "ontouchstart" in document.createElement("input"); //$NON-NLS-1$ //$NON-NLS-0$
+			
+			var platformDelimiter = isWindows ? "\r\n" : "\n"; //$NON-NLS-1$ //$NON-NLS-0$
+	
+			function formatMessage(msg) {
+				var args = arguments;
+				return msg.replace(/\$\{([^\}]+)\}/g, function(str, index) { return args[(index << 0) + 1]; });
+			}
+			
+			var XHTML = "http://www.w3.org/1999/xhtml"; //$NON-NLS-0$
+			function createElement(document, tagName) {
+				if (document.createElementNS) {
+					return document.createElementNS(XHTML, tagName);
+				}
+				return document.createElement(tagName);
+			}
+	
+			return {
+				formatMessage: formatMessage,
+				
+				createElement: createElement,
+				
+				/** Browsers */
+				isIE: isIE,
+				isFirefox: isFirefox,
+				isOpera: isOpera,
+				isChrome: isChrome,
+				isSafari: isSafari,
+				isWebkit: isWebkit,
+				isAndroid: isAndroid,
+				isIPad: isIPad,
+				isIPhone: isIPhone,
+				isIOS: isIOS,
+				
+				/** OSs */
+				isMac: isMac,
+				isWindows: isWindows,
+				isLinux: isLinux,
+	
+				/** Capabilities */
+				isTouch: isTouch,
+	
+				platformDelimiter: platformDelimiter
+			};
+		}
+	}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }
 /******/ ])

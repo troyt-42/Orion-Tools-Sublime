@@ -1,6 +1,6 @@
 /*eslint-env node */
 var scriptResolver = require("./scriptResolver.js");
-var orionJSLib = require("./OrionJavaScriptWithQuickFixes.js");
+var orionJSLib = require("./orionJavaScript.min.js");
 var orionJS = new orionJSLib(new scriptResolver(), false);
 var express = require("express");
 var app = express();
@@ -125,5 +125,3 @@ var listener = app.listen(app.get("port"), function(){
 	process.on("SIGINT", function() { process.exit(); });
 	process.on("SIGTERM", function() { process.exit(); });
 });
-
-
