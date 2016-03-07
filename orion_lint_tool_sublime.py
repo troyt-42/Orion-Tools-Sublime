@@ -128,6 +128,10 @@ class quickFixesLib():
 				"des" : "Add parentheses",
 				"fix" : self.newParensFix
 			}],
+			"no-reserved-keys" : [{
+				"des" : "Surround key with quotes",
+				"fix" : self.noReservedKeysFix
+			}],
 			"no-self-assign":[{
 				"des" : "Remove assignment",
 				"fix" : self.noSelfAssignFix
@@ -315,6 +319,14 @@ class quickFixesLib():
 		}
 		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
+			view.insert(edit, data["start"], data["text"])
+	def noReservedKeysFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-reserved-keys"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
 			view.insert(edit, data["start"], data["text"])
 	def noSelfAssignFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = { 

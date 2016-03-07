@@ -41014,6 +41014,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	                fix += computePostfix(text, annotation, indent);
 	                return { "text" : fix, "start" : annotation.start, "end" : annotation.start};
 		        },
+		        /** 
+		         * for for the no-reserved-keys linting rule
+		         * @callback
+		         */
+		       "no-reserved-keys": function(data) {
+		       		text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+       				var node = Finder.findNode(annotation.start, ast, {parents:true});
+	                if(node && node.type === 'Identifier') {
+		                return {
+		                	text: '"'+node.name+'"', //$NON-NLS-2$ //$NON-NLS-1$
+		                	start: node.range[0],
+		                	end: node.range[1]
+		                };
+					}
+		        },
 				"no-self-assign": function(data) {
 					text = data["text"];
 					annotation = data["annotation"];
