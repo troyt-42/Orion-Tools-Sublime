@@ -40908,7 +40908,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 					var node = Finder.findNode(annotation.start, ast, {parents:true});
 					if(node && node.type === 'Identifier') {
-						return { "text" : '()', "point" : node.range[1]}; //$NON-NLS-1$
+						return { "text" : '()', "start" : node.range[1], "end" : node.range[1]}; //$NON-NLS-1$
 					}
 				},
 				"no-debugger" : function(data) {
@@ -41125,6 +41125,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                return null;
 		        },
+		        /** 
+		         * fix for the no-throw-literal linting rule
+		         * @callback
+		         */
+		        "no-throw-literal": function(data) {
+		            text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+	                var node = Finder.findNode(annotation.start, ast, {parents:true});
+	                var source = node.raw || ast.source.slice(node.range[0], node.range[1]);
+	                return { "text" : 'new Error(' + source + ')', "start" : annotation.start, "end" : annotation.end}; //$NON-NLS-1$
+
+		        },
 				/**
 		         * @callback
 		         */
@@ -41287,13 +41301,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    comment = Finder.findDirective(ast, 'globals'); //$NON-NLS-1$
 	                    if(comment) {
 	                        start = comment.range[0]+2;
-	                        return {"point" : start+comment.value.length, "text" : insert+" ", }; //$NON-NLS-1$
+	                        return {"start" : start+comment.value.length, "end" : start+comment.value.length, "text" : insert+" ", }; //$NON-NLS-1$
 	                    }
                         var point = getDirectiveInsertionPoint(ast);
                     	var linestart = getLineStart(ast.source, point);
                     	var indent = computeIndent(ast.source, linestart, false);
                			var fix = '/*globals '+insert+' */\n' + indent; //$NON-NLS-1$ //$NON-NLS-2$
-                        return {"point" : point, "text" : fix};
+                        return {"start" : point, "end" : point, "text" : fix};
 	            	}
 	            	return name;
 				},
@@ -41326,7 +41340,7 @@ return /******/ (function(modules) { // webpackBootstrap
                     		var linestart = getLineStart(ast.source, point);
                     		var indent = computeIndent(ast.source, linestart, false);
                				var fix = '/*eslint-env '+env+' */\n' + indent; //$NON-NLS-1$ //$NON-NLS-2$
-                            return {"text" : fix, "point" : point};
+                            return {"text" : fix, "start" : point, "end" : point};
 	                    }
 		            }
 		            return null;

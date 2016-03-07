@@ -84,6 +84,14 @@ class quickFixesLib():
 			"missing-nls" : [{
 				"des" : "Add missing $NON-NLS$ tag",
 				"fix" : self.missingNlsFix
+			}],			
+			"new-parens" : [{
+				"des" : "Add parentheses",
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "new-parens",
+					"insert" : True
+				}
 			}],
 			"no-comma-dangle" : [{
 				"des" : "Remove extra comma",
@@ -91,7 +99,11 @@ class quickFixesLib():
 			}],
 			"no-debugger" : [{
 				"des" : "Remove statement",
-				"fix" : self.noDebuggerFix
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "no-debugger",
+					"erase" : True
+				}
 			}],
 			"no-duplicate-case" : [{
 				"des" : "Rename case",
@@ -103,7 +115,11 @@ class quickFixesLib():
 			}],
 			"no-empty-block" : [{
 				"des" : "Comment empty block",
-				"fix" : self.noEmptyBlockFix
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "no-empty-block",
+					"insert" : True
+				}
 			}],
 			"no-eq-null" : [{
 				"des" : "Update operator",
@@ -111,7 +127,11 @@ class quickFixesLib():
 			}],
 			"no-extra-parens" : [{
 				"des" : "Remove gratuitous parentheses",
-				"fix" : self.noExtraParensFix
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "no-extra-parens",
+					"erase" : True
+				}
 			}],
 			"no-extra-semi" : [{
 				"des" : "Remove extra semicolon",
@@ -119,40 +139,82 @@ class quickFixesLib():
 			}],
 			"no-fallthrough" : [{
 				"des" : "Add $FALLTRHOUGH$ comment",
-				"fix" : self.noFallthroughFix
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "no-fallthrough",
+					"insert" : True
+				}
 			}, {
 				"des" : "Add break statement",
-				"fix" : self.noFallthroughBreakFix
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "no-fallthrough-break",
+					"insert" : True
+				}
 			}],
-			"new-parens" : [{
-				"des" : "Add parentheses",
-				"fix" : self.newParensFix
-			}],
+			"no-new-array" : [{
+ 				"des" : "Convert to name literal",
+ 				"fix" : self.fixActionHelper,
+ 				"options" : {
+ 					"id" : "no-new-array",
+ 					"insert" : True,
+ 					"erase" : True
+ 				}
+ 			}],
+ 			"no-new-wrappers" : [{
+ 				"des" : "Remove 'new' keyword",
+ 				"fix" : self.fixActionHelper,
+ 				"options" : {
+ 					"id" : "no-new-wrappers",
+ 					"insert" : True,
+ 					"erase" : True
+ 				}
+ 			}, {
+ 				"des" : "Convert to literal",
+ 				"fix" : self.fixActionHelper,
+ 				"options" : {
+ 					"id" : "no-new-wrappers-literal",
+ 					"insert" : True,
+ 					"erase" : True
+ 				}
+ 			}],
 			"no-reserved-keys" : [{
 				"des" : "Surround key with quotes",
-				"fix" : self.noReservedKeysFix
+				"fix" : self.fixActionHelper,
+				"options" : {
+ 					"id" : "no-reserved-keys",
+ 					"insert" : True,
+ 					"erase" : True
+ 				}
 			}],
 			"no-self-assign":[{
 				"des" : "Remove assignment",
-				"fix" : self.noSelfAssignFix
+				"fix" : self.fixActionHelper,
+				"options" : {
+ 					"id" : "no-self-assign",
+ 					"erase" : True
+ 				}
  			}, {
  				"des" : "Rename right hand variable",
  				"fix" : self.noSelfAssignRenameFix
  			}],
  			"no-sparse-arrays" : [{
  				"des" : "Convert to normal array",
- 				"fix" : self.noSparseArraysFix
+ 				"fix" : self.fixActionHelper,
+ 				"options" : {
+ 					"id" : "no-sparse-arrays",
+ 					"insert" : True,
+ 					"erase" : True
+ 				}
  			}],
- 			"no-new-array" : [{
- 				"des" : "Convert to name literal",
- 				"fix" : self.noNewArrayFix
- 			}],
- 			"no-new-wrappers" : [{
- 				"des" : "Remove 'new' keyword",
- 				"fix" : self.noNewWrappersFix
- 			}, {
- 				"des" : "Convert to literal",
- 				"fix" : self.noNewWrappersLiteralFix
+ 			"no-throw-literal" : [{
+ 				"des" : "Change to Error",
+ 				"fix" : self.fixActionHelper,
+ 				"options" : {
+ 					"id" : "no-throw-literal",
+ 					"insert" : True,
+ 					"erase" : True
+ 				}
  			}],
 			"no-undef" : [{
 				"des" : "Add to Global Directive",
@@ -172,28 +234,52 @@ class quickFixesLib():
 			}],
 			"no-unused-params" : [{
 				"des" : "Remove parameter",
-				"fix" : self.noUnusedParamsFix
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "no-unused-params",
+					"erase" : True
+				}
 			}, {
 				"des" : "Add @callback to function",
-				"fix" : self.noUnusedParamsExprFix,
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "no-unused-params-expr",
+					"insert" : True
+				},
 				"pid" : "no-unused-params-expr"
 			}],
 			"no-unused-vars" : [{
 				"des" : "Remove the unused variable",
-				"fix" : self.noUnusedVarsUnusedFix,
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "no-unused-vars-unused",
+					"erase" : True
+				},
 				"pid" : "no-unused-vars-unused"
 			},{
 				"des" : "Remove the unread variable",
-				"fix" : self.noUnusedVarsUnreadFix,
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "no-unused-vars-unread",
+					"erase" : True
+				},
 				"pid" : "no-unused-vars-unread"
 			},{
 				"des" : "Remove the unused function",
-				"fix" : self.noUnusedVarsFuncdeclFix,
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "no-unused-vars-unused-funcdecl",
+					"erase" : True
+				},
 				"pid" : "no-unused-vars-unused-funcdecl"
 			}],
 			"radix" : [{
 				"des" : "Add default radix",
-				"fix" : self.radixFix
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "radix",
+					"insert" : True
+				}
 			}],
 			"semi" : [{
 				"des" : "Add missing ';'",
@@ -201,7 +287,12 @@ class quickFixesLib():
 			}],
 			"use-isnan" : [{
 				"des" : "Use isNaN()",
-				"fix" : self.useIsnanFix
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "use-isnan",
+					"erase" : True,
+					"insert" : True
+				}
 			}],
 			"unnecessary-nls" : [{
 				"des" : "Remove Unnecessary $NON-NLS$ tag",
@@ -209,7 +300,7 @@ class quickFixesLib():
 			}]
 		}
 	@staticmethod
-	def fixHelper(view, edit, index, errStart, errEnd, docKeysToChange):
+	def fixRequest(view, edit, index, errStart, errEnd, docKeysToChange):
 		def update(a, b):
 			for k, v in b.items():
 				if type(v) != dict:
@@ -241,6 +332,28 @@ class quickFixesLib():
 		except:
 			pass
 		return data
+	def fixActionHelper(self, view, edit,index, errStart, errEnd, options):
+		# options includes fields: insert(Boolean), erase(Boolean), id(String), special(Dict)
+		docKeysToChange = options.get("special");
+		if docKeysToChange == None:
+			docKeysToChange = {
+				"id" : options.get("id")
+			}
+		data = self.fixRequest(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data != None:
+			if options.get("erase", False) == True:
+				if type(data) == list:
+					regions = []
+					for fix in data:
+						regionTup = (fix["start"], fix["end"])
+						regions.append(regionTup)
+					regions.sort(key=lambda tup:tup[0], reverse=True)
+					for re in regions:
+						view.erase(edit, sublime.Region(re[0], re[1]))
+				else:
+					view.erase(edit, sublime.Region(data["start"], data["end"]))
+			if options.get("insert", False) == True:
+				view.insert(edit, data["start"], data["text"])
 	def curlyFix(self, view, edit,index, errStart, errEnd):
 		view.insert(edit, errStart, "{  ")
 		view.insert(edit, errEnd+3, "  }")
@@ -254,30 +367,16 @@ class quickFixesLib():
 			"id" : "missing-nls",
 			"annotation" : { "data" : metaMessages[index]["args"]["data"]}
 		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		data = self.fixRequest(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			view.insert(edit, data["start"], data["text"])
-	def newParensFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "new-parens"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.insert(edit, data["point"], data["text"])
 	def noCommaDangleFix(self, view, edit, index, errStart, errEnd):
 		view.erase(edit, sublime.Region(errStart, errEnd))
-	def noDebuggerFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-debugger"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.erase(edit, sublime.Region(data["start"], data["end"]))
 	def noDuplicateCaseFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "no-duplicate-case"
 		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		data = self.fixRequest(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data is not None:
 			group = data["groups"][0] #Assume single group
 			view.sel().clear()
@@ -287,106 +386,30 @@ class quickFixesLib():
 		docKeysToChange = {
 			"id" : "no-dupe-keys"
 		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		data = self.fixRequest(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data is not None:
 			group = data["groups"][0] #Assume single group
 			view.sel().clear()
 			for pos in group['positions']:
 				view.sel().add(sublime.Region(pos['offset'], pos['offset']+pos['length']))
-	def noEmptyBlockFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-empty-block"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.insert(edit, data["start"], data["text"])
-	def noExtraParensFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-extra-parens"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.erase(edit, sublime.Region(data[0]["start"], data[0]["end"]))
-			view.erase(edit, sublime.Region(data[1]["start"]-1, data[1]["end"]-1))
 	def noExtraSemiFix(self, view, edit, index, errStart, errEnd):
 		view.erase(edit, sublime.Region(errStart, errEnd))
-	def noFallthroughFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-fallthrough"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.insert(edit, data["start"], data["text"])
-	def noFallthroughBreakFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-fallthrough-break"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.insert(edit, data["start"], data["text"])
-	def noReservedKeysFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-reserved-keys"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.erase(edit, sublime.Region(data["start"], data["end"]))
-			view.insert(edit, data["start"], data["text"])
-	def noSelfAssignFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = { 
-			"id" : "no-self-assign"
-			}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data is not None:
-			view.erase(edit, sublime.Region(data["start"], data["end"]))
 	def noSelfAssignRenameFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-self-assign-rename"
 			}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		data = self.fixRequest(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data is not None:
 			group = data["groups"][0] #Assume single group
 			view.sel().clear()
 			for pos in group['positions']:
 				view.sel().add(sublime.Region(pos['offset'], pos['offset']+pos['length']))
-	def noSparseArraysFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-sparse-arrays"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data is not None:
-			view.erase(edit, sublime.Region(data["start"], data["end"]))
-			view.insert(edit, data["start"], data['text'])
-	def noNewArrayFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-new-array"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data is not None:
-			view.erase(edit, sublime.Region(data["start"], data["end"]))
-			view.insert(edit, data["start"], data["text"])
-	def noNewWrappersFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-new-wrappers"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.erase(edit, sublime.Region(data["start"], data["end"]))
-			view.insert(edit, data["start"], data["text"])
-	def noNewWrappersLiteralFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-new-wrappers-literal"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.erase(edit, sublime.Region(data["start"], data["end"]))
-			view.insert(edit, data["start"], data["text"])
 	def noUndefFix(self, view, edit,index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-undef", 
 			"annotation" : {"title" : messages[index]}
 			}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		data = self.fixRequest(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data is not None:
 			view.insert(edit, data["point"], data["text"])
 	def noUndefDefinedInenvFix(self, view, edit,index, errStart, errEnd):
@@ -394,7 +417,7 @@ class quickFixesLib():
 			"id" : "no-undef-defined-inenv", 
 			"annotation" : {"title" : messages[index]}
 			}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		data = self.fixRequest(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data is not None:
 			view.insert(edit, data["point"], data["text"])
 	def noUndefInitFix(self, view, edit, index, errStart, errEnd):
@@ -402,67 +425,13 @@ class quickFixesLib():
 			"id" : "no-undef-init", 
 			"annotation" : {"title" : messages[index]}
 			}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		data = self.fixRequest(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data is not None:
 			view.erase(edit, sublime.Region(data["start"], data["end"]));
 	def noUnreachableFix(self, view, edit,index, errStart, errEnd):
 		view.erase(edit, sublime.Region(view.full_line(errStart).a, view.full_line(errEnd).b))
-	def noUnusedParamsFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-unused-params"
-		}
-		# print({"text" : view.substr(sublime.Region(0, view.size()))})
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			for fix in data:
-				region = sublime.Region(fix["start"], fix["end"])
-				view.erase(edit, region) 
-		# print({"text" : view.substr(sublime.Region(0, view.size()))})
-	def noUnusedParamsExprFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "no-unused-params-expr"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.insert(edit, data['start'], data['text'])
-	def noUnusedVarsUnusedFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			'id' : "no-unused-vars-unused"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.erase(edit, sublime.Region(data["start"], data["end"]))
-	def noUnusedVarsUnreadFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			'id' : "no-unused-vars-unread"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.erase(edit, sublime.Region(data["start"], data["end"]))
-	def noUnusedVarsFuncdeclFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			'id' : "no-unused-vars-unused-funcdecl"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.erase(edit, sublime.Region(data["start"], data["end"]))
-	def radixFix(self, view, edit,index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "radix"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.insert(edit, data["start"], data["text"])
 	def semiFix(self, view, edit,index, errStart, errEnd):
 		view.insert(edit, errEnd, ";")
-	def useIsnanFix(self, view, edit, index, errStart, errEnd):
-		docKeysToChange = {
-			"id" : "use-isnan"
-		}
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
-		if data != None:
-			view.erase(edit, sublime.Region(data["start"], data["end"]))
-			view.insert(edit, data["start"], data["text"])
 	def unnecessaryNlsFix(self, view, edit, index, errStart, errEnd):
 		global metaMessages
 		docKeysToChange = {
@@ -470,7 +439,7 @@ class quickFixesLib():
 			"annotation" : { "data" : metaMessages[index]["args"]["data"]}
 		}
 		
-		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		data = self.fixRequest(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data != None:
 			view.erase(edit, sublime.Region(data["start"], data["end"]))
 
@@ -637,24 +606,27 @@ class orionTooltipCommand(sublime_plugin.TextCommand):
 			selection = self.view.sel()[0] #Assume single selection
 			temp = []
 			tempIndexes = []
+			itemsInsideError = []
 			def close_tooltip(x):
 				if x >= 0 and type(temp[x]) == str and re.match(r"^Quick Fix", temp[x]) == None:
 					messageStatus[tempIndexes[x]] = False
 				elif  x >= 0 and type(temp[x]) == str and re.match(r"^Quick Fix", temp[x]) != None:
 					if a == selection.a:
-						self.view.run_command("execute_fixes", { "kind" : tempIndexes[x], "index" : x-1, "errStart" : selection.a, "errEnd" : selection.b})
+						self.view.run_command("execute_fixes", { "kind" : tempIndexes[x], "index" : itemsInsideError[x], "errStart" : selection.a, "errEnd" : selection.b})
 					else:
-						self.view.run_command("execute_fixes", { "kind" : tempIndexes[x], "index" : x-1, "errStart" : selection.b, "errEnd" : selection.a})
+						self.view.run_command("execute_fixes", { "kind" : tempIndexes[x], "index" : itemsInsideError[x], "errStart" : selection.b, "errEnd" : selection.a})
 			for index, loc in enumerate(messageLocs):
 				a = loc.a
 				b = loc.b
 				if a == selection.a and b == selection.b or a == selection.b and b == selection.a:
 					if messageStatus[index] == True:
 						temp.append(messages[index] + "                    Click to ignore")
+						itemsInsideError.append(-1)
 						tempIndexes.append(index)
 						if quickFixes[index] != None:
 							for i in range(len(quickFixes[index])):
 								temp.append("Quick Fix: " + quickFixes[index][i]["des"])
+								itemsInsideError.append(i)
 								tempIndexes.append(index)
 			if(len(temp) != 0):
 				self.view.show_popup_menu(temp, close_tooltip)
@@ -662,7 +634,10 @@ class orionTooltipCommand(sublime_plugin.TextCommand):
 				lastSel = None
 class executeFixes(sublime_plugin.TextCommand):
 	def run(self, edit, kind, index, errStart, errEnd):
-		quickFixes[kind][index]["fix"](self.view, edit, kind, min(errStart, errEnd), max(errStart, errEnd))
+		if quickFixes[kind][index].get("options") != None:
+			quickFixes[kind][index]["fix"](self.view, edit, kind, min(errStart, errEnd), max(errStart, errEnd), quickFixes[kind][index].get("options"))
+		else: 
+			quickFixes[kind][index]["fix"](self.view, edit, kind, min(errStart, errEnd), max(errStart, errEnd))
 		reLintException = ["Rename right hand variable", "Rename case", "Rename key"]
 		if quickFixes[kind][index]["des"] not in reLintException:
 			self.view.run_command("orion_lint")
