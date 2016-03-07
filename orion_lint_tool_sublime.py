@@ -139,6 +139,10 @@ class quickFixesLib():
  				"des" : "Rename right hand variable",
  				"fix" : self.noSelfAssignRenameFix
  			}],
+ 			"no-sparse-arrays" : [{
+ 				"des" : "Convert to normal array",
+ 				"fix" : self.noSparseArraysFix
+ 			}],
  			"no-new-array" : [{
  				"des" : "Convert to name literal",
  				"fix" : self.noNewArrayFix
@@ -345,6 +349,14 @@ class quickFixesLib():
 			view.sel().clear()
 			for pos in group['positions']:
 				view.sel().add(sublime.Region(pos['offset'], pos['offset']+pos['length']))
+	def noSparseArraysFix(self, view, edit, index, errStart, errEnd):
+		docKeysToChange = {
+			"id" : "no-sparse-arrays"
+		}
+		data = self.fixHelper(view, edit, index, errStart, errEnd, docKeysToChange)
+		if data is not None:
+			view.erase(edit, sublime.Region(data["start"], data["end"]))
+			view.insert(edit, data["start"], data['text'])
 	def noNewArrayFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = {
 			"id" : "no-new-array"
@@ -493,7 +505,7 @@ class orionLintCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		if os.path.isfile('orion_global_variables.txt'):
 			globalVariableFile = open(pluginDir+'/orion_global_variables.txt', 'r');
-			globalVariables = []
+			global globalVariables
 			for line in globalVariableFile:
 				for var in line.split():
 					globalVariables.append(var)
@@ -537,7 +549,7 @@ class orionLintCommand(sublime_plugin.TextCommand):
 			del messageStatus[:]
 			del quickFixes[:]
 			if data != None:
-				global metaMessages 
+				global metaMessages
 				metaMessages = data
 				for result in data:
 					# print(result)

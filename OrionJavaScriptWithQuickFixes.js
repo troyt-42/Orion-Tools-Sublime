@@ -41018,7 +41018,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		         * for for the no-reserved-keys linting rule
 		         * @callback
 		         */
-		       "no-reserved-keys": function(data) {
+		        "no-reserved-keys": function(data) {
 		       		text = data["text"];
 					annotation = data["annotation"];
 					ast = astManager.parse(text, "unknown");
@@ -41074,6 +41074,57 @@ return /******/ (function(modules) { // webpackBootstrap
 						return linkModel;
 					}
 				},
+				/** 
+		         * fix for the no-sparse-arrays linting rule
+		         * @callback
+		         */
+		        "no-sparse-arrays": function(data) {
+		        	text = data["text"];
+					annotation = data["annotation"];
+					ast = astManager.parse(text, "unknown");
+
+	                var node = Finder.findNode(annotation.start, ast, {parents:true});
+	                if(node && node.type === 'ArrayExpression') {
+	                    var model = new TextModel.TextModel(ast.source.slice(annotation.start, annotation.end));
+	                    var len = node.elements.length;
+	                    var idx = len-1;
+	                    var item = node.elements[idx];
+	                    if(item === null) {
+	                        var end = Finder.findToken(node.range[1], ast.tokens);
+	                        if(end.value !== ']') {
+	                            //for a follow-on token we want the previous - i.e. a token immediately following the ']' that has no space
+	                            end = ast.tokens[end.index-1];
+	                        }
+	                        //wipe all trailing entries first using the ']' token start as the end
+	                        for(; idx > -1; idx--) {
+	                            item = node.elements[idx];
+	                            if(item !== null) {
+	                                break;
+	                            }
+	                        }
+	                        if(item === null) {
+	                            //whole array is sparse - wipe it
+	                            return { "text" : '', "start" : annotation.start+1, "end" : annotation.end-1};
+	                        }
+	                        model.setText('', item.range[1]-annotation.start, end.range[0]-annotation.start);
+	                    }
+	                    var prev = item;
+	                    for(; idx > -1; idx--) {
+	                        item = node.elements[idx];
+	                        if(item === null || item.range[0] === prev.range[0]) {
+	                            continue;
+	                        }
+	                        model.setText(', ', item.range[1]-annotation.start, prev.range[0]-annotation.start); //$NON-NLS-1$
+	                        prev = item;
+	                    }
+	                    if(item === null && prev !== null) {
+	                        //need to wipe the front of the array
+	                        model.setText('', node.range[0]+1-annotation.start, prev.range[0]-annotation.start);
+	                    }
+	                    return { "text" : model.getText(), "start" : annotation.start, "end" : annotation.end};
+	                }
+	                return null;
+		        },
 				/**
 		         * @callback
 		         */
