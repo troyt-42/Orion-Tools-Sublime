@@ -18,19 +18,30 @@ A collection of plugins that provide Orion tools for Sublime.
 # Avaliable Quick Fixes#
 1. `curly`
 2. `eqeqeq`
+3. `missing-nls`
+4. `new-parens`
+5. `no-comma-dangle`
 3. `no-debugger`
 4. `no-duplicate-case`
+5. `no-dupe-keys`
+6. `no-empty-block`
 5. `no-eq-null`
-6. `new-parens`
-7. `no-self-assign`
-8. `no-undef`
-9. `no-undef-init`
-10. `no-unreachable`
-11. `no-unused-params`
-12. `no-unused-vars`
-13. `radix`
-14. `semi`
-15. `use-isnan`
-16. `unnecessary-nls`
+6. `no-extra-parens`
+7. `no-extra-semi`
+8. `no-fallthrough`
+9. `no-new-wrappers`
+10. `no-reserved-keys`
+11. `no-self-assign`
+12. `no-sparse-arrays`
+13. `no-throw-literal`
+14. `no-undef`
+15. `no-undef-init`
+16. `no-unreachable`
+17. `no-unused-params`
+18. `no-unused-vars`
+19. `radix`
+20. `semi`
+21. `use-isnan`
+22. `unnecessary-nls`
 
 Details about these rules can be found here: http://eslint.org/docs/rules/
