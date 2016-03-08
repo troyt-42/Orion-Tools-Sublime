@@ -81,6 +81,14 @@ class quickFixesLib():
 				"des" : "Update operator",
 				"fix" : self.eqeqeqFix
 			}],
+			"missing-doc" : [{
+				"des" : "Generate element JSDoc",
+				"fix" : self.fixActionHelper,
+				"options" : {
+					"id" : "missing-doc",
+					"insert" : True
+				}
+			}],
 			"missing-nls" : [{
 				"des" : "Add missing $NON-NLS$ tag",
 				"fix" : self.missingNlsFix

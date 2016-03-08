@@ -1,6 +1,6 @@
 /*eslint-env node */
 var scriptResolver = require("./scriptResolver.js");
-var orionJSLib = require("./orionJavaScript.min.js");
+var orionJSLib = require("./orionJavaScriptCommand.js");
 var orionJS = new orionJSLib(new scriptResolver(), false);
 var express = require("express");
 var app = express();
@@ -28,7 +28,7 @@ var defaults = {
 	"accessor-pairs" : 1,
 	"curly" : 1,
 	"eqeqeq": 1,
-	"missing-doc" : 0, 
+	"missing-doc" : 1, 
 	"missing-nls" : 0,
 	"new-parens" : 1,
 	"no-caller": 1,
