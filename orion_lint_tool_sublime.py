@@ -206,6 +206,18 @@ class quickFixesLib():
  				"des" : "Rename right hand variable",
  				"fix" : self.noSelfAssignRenameFix
  			}],
+ 			"no-shadow":[{
+ 				"des" : "Rename in scope",
+ 				"fix" : self.renameFix
+ 			}],
+ 			"no-shadow-global":[{
+ 				"des" : "Rename in scope",
+ 				"fix" : self.renameFix
+ 			}],
+ 			"no-shadow-global-param":[{
+ 				"des" : "Rename in scope",
+ 				"fix" : self.renameFix
+ 			}],
  			"no-sparse-arrays" : [{
  				"des" : "Convert to normal array",
  				"fix" : self.fixActionHelper,
@@ -420,7 +432,7 @@ class quickFixesLib():
 			}
 		data = self.fixRequest(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data is not None:
-			view.insert(edit, data["point"], data["text"])
+			view.insert(edit, data["start"], data["text"])
 	def noUndefDefinedInenvFix(self, view, edit,index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-undef-defined-inenv", 
@@ -428,7 +440,7 @@ class quickFixesLib():
 			}
 		data = self.fixRequest(view, edit, index, errStart, errEnd, docKeysToChange)
 		if data is not None:
-			view.insert(edit, data["point"], data["text"])
+			view.insert(edit, data["start"], data["text"])
 	def noUndefInitFix(self, view, edit, index, errStart, errEnd):
 		docKeysToChange = { 
 			"id" : "no-undef-init", 
@@ -439,6 +451,10 @@ class quickFixesLib():
 			view.erase(edit, sublime.Region(data["start"], data["end"]));
 	def noUnreachableFix(self, view, edit,index, errStart, errEnd):
 		view.erase(edit, sublime.Region(view.full_line(errStart).a, view.full_line(errEnd).b))
+	def renameFix(self, view, edit, index, errStart, errEnd):
+		messageStatus[index] = False
+		view.sel().clear();
+		view.sel().add(sublime.Region(errStart, errEnd))
 	def semiFix(self, view, edit,index, errStart, errEnd):
 		view.insert(edit, errEnd, ";")
 	def unnecessaryNlsFix(self, view, edit, index, errStart, errEnd):
@@ -618,6 +634,7 @@ class orionTooltipCommand(sublime_plugin.TextCommand):
 			itemsInsideError = []
 			def close_tooltip(x):
 				if x >= 0 and type(temp[x]) == str and re.match(r"^Quick Fix", temp[x]) == None:
+					print(metaMessages[tempIndexes[x]])
 					messageStatus[tempIndexes[x]] = False
 				elif  x >= 0 and type(temp[x]) == str and re.match(r"^Quick Fix", temp[x]) != None:
 					if a == selection.a:
@@ -647,7 +664,7 @@ class executeFixes(sublime_plugin.TextCommand):
 			quickFixes[kind][index]["fix"](self.view, edit, kind, min(errStart, errEnd), max(errStart, errEnd), quickFixes[kind][index].get("options"))
 		else: 
 			quickFixes[kind][index]["fix"](self.view, edit, kind, min(errStart, errEnd), max(errStart, errEnd))
-		reLintException = ["Rename right hand variable", "Rename case", "Rename key"]
+		reLintException = ["Rename right hand variable", "Rename case", "Rename key", "Rename in scope"]
 		if quickFixes[kind][index]["des"] not in reLintException:
 			self.view.run_command("orion_lint")
 
