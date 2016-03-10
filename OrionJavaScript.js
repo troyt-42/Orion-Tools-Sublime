@@ -840,16 +840,18 @@ return /******/ (function(modules) { // webpackBootstrap
 		    		ternserver.request({
 			           query: {
 				           type: "type",  //$NON-NLS-1$
-				           file: file,
+				           file: "#0",
 				           end: offset
-			           }},
-			           function(error, type) {
-			               if(error) {
-			                   callback(null, {error: typeof error === 'string' ? error : error.message, message: Messages['failedType']});
-			               } else {
-								callback(type);
-			               }
-			           });
+			           },
+			           files : file
+			       	},
+		           function(error, type) {
+		               if(error) {
+		                   callback(null, {error: typeof error === 'string' ? error : error.message, message: Messages['failedType']});
+		               } else {
+							callback(type);
+		               }
+		           });
 			 	} else {
 			       callback(null, {message: Messages['failedTypeNoServer']});
 			   }

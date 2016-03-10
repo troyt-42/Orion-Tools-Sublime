@@ -28,7 +28,7 @@ var defaults = {
 	"accessor-pairs" : 1,
 	"curly" : 1,
 	"eqeqeq": 1,
-	"missing-doc" : 2, 
+	"missing-doc" : 0, 
 	"missing-nls" : 0,
 	"new-parens" : 1,
 	"no-caller": 1,
