@@ -672,9 +672,14 @@ class orionReferences(sublime_plugin.TextCommand):
 	def run(self, edit):
 		if self.view.file_name()[len(self.view.file_name()) -3:] == ".js":
 			originStr = self.view.substr(self.view.sel()[0]);
+			allRegion = sublime.Region(0, self.view.size())
+			allText = self.view.substr(allRegion)
 			doc = {
 				"originStr" : originStr,
-				"root" : self.view.window().folders()[0]
+				"root" : self.view.window().folders()[0],
+				"file" : allText,
+				"path" : self.view.file_name(),
+				"offset" : min(self.view.sel()[0].a, self.view.sel()[0].b)
 			}
 			data = None
 			print(doc)

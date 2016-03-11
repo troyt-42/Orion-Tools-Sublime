@@ -243,8 +243,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param {Number} offset The offset of the completion
 	     * @param {Function} callback The callback which is called to return the results
 	     */
-	    JavaScript.prototype.Tern.type = function type(file, offset, callback) {
-	    	ternserver.type(file, offset, callback);
+	    JavaScript.prototype.Tern.type = function type(file, offset, files, callback) {
+	    	ternserver.type(file, offset, files, callback);
 	    };
 	    
 	    /**
@@ -835,15 +835,15 @@ return /******/ (function(modules) { // webpackBootstrap
 		     * @param {Number} offset The offset of the completion
 		     * @param {Function} callback The callback which is called to return the results
 		     */
-		    type: function type(file, offset, callback) {
+		    type: function type(file, offset, files, callback) {
 		    	if(ternserver) {
 		    		ternserver.request({
 			           query: {
 				           type: "type",  //$NON-NLS-1$
-				           file: "#0",
+				           file: file,
 				           end: offset
 			           },
-			           files : file
+			           files : files
 			       	},
 		           function(error, type) {
 		               if(error) {

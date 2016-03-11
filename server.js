@@ -117,7 +117,20 @@ app.post("/quickFixes", /* @callback */ function(req, res){
 app.post("/References", /* @callback */ function(req, res){
 	var searchLoc = data.root;
 	var originStr = data.originStr;
-	orionSearchClient.search(searchLoc, originStr, function(err, ress){ console.log(ress);res.send(ress);});
+	var file = [{
+		"text" : data.file,
+		"name" : data.path,
+		"type" : "full"
+	}];
+	var offset = data.offset;
+	orionJS.Tern.type(file, offset, function(response, err){
+		orionSearchClient.search(searchLoc, originStr, function(err, result){ 
+			var total = 0;
+			result.forEach(function(file){
+				total += file.positions;
+			});
+		});
+	});
 });
 
 process.stdin.on("end", function() { process.exit(); });
