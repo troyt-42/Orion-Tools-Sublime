@@ -3,30 +3,39 @@
 // var orionJSLib = require("./orionJavaScript.js");
 // var orionJS = new orionJSLib(new scriptResolver(), false);
 var fs = require("fs");
-// var readline = require("readline");
+var readline = require("readline");
 var path = require('path');
 
-var walk = function(dir, done) {
-  var results = [];
+var search = function(dir, originStr, done) {
+  var jsResults = [];
   fs.readdir(dir, function(err, list) {
     if (err) {  return done(err);  }
     var pending = list.length;
-    if (!pending) {  return done(null, results);  }
+    if (!pending) { return done(null, jsResults);  }
     list.forEach(function(file) {
       file = path.resolve(dir, file);
       if (path.extname(file) === ".js") {
-      	results.push(file);
-      	if (!--pending) {  done(null, results);  }
+      	checkFileContent(file, originStr, function(err, res){
+      		if (!err){
+      			if(res["positions"].length){
+      				jsResults = jsResults.concat(res);
+	      		}
+	      		if (!--pending) { done(null, jsResults); }
+      		} else {
+      			done(err, null);
+      		}
+
+      	});
       } else {
       	fs.stat(file, function(err, stat) {
       		if (err === null){
       			if (stat && stat.isDirectory()) {
-  					walk(file, /* @callback */ function(err, res) {
-  						results = results.concat(res);
-		            	if (!--pending) { done(null, results);  }
+  					search(file,originStr, /* @callback */ function(err, res) {
+  						jsResults = jsResults.concat(res);
+		            	if (!--pending) { done(null, jsResults);  }
 		          	});
 		        } else {
-		          if (!--pending) {  done(null, results);  }
+		          if (!--pending) {  done(null, jsResults);  }
 		        }
       		}
 	    });
@@ -35,7 +44,7 @@ var walk = function(dir, done) {
   });
 };
 
-walk("C:\\Users\\IBM_ADMIN\\git\\org.eclipse.orion.client", function(err, res){ console.log(res, err);});
+search("C:\\Users\\IBM_ADMIN\\git\\org.eclipse.orion.client", "_findRefs", function(err, res){ console.log(res, err);});
 
 // fs.readdir("C:\\Users\\IBM_ADMIN\\git\\org.eclipse.orion.client", function(err, files){
 // 	if (err === null){
@@ -45,25 +54,23 @@ walk("C:\\Users\\IBM_ADMIN\\git\\org.eclipse.orion.client", function(err, res){ 
 // 	}
 // });
 
-// function checkFileContent(path){
-// 	var positions = [];
-// 	var posTemp = 0;
-// 	var output = { "text" : "" };
-// 	readline.createInterface({
-// 		input: fs.createReadStream("./test.js"),
-// 		terminal: false
-// 	}).on('line', function(line){
-// 		var idx = line.indexOf("test");
-// 		output += line + "\n";
-// 		if (idx !== -1){
-// 			positions.push(posTemp + idx);
-// 		}
-
-// 		posTemp += line.length + 1;
-// 	}).on("close", function(){
-// 		console.log(positions);
-// 	});
-// }
+function checkFileContent(path, originStr, done){
+	var positions = [];
+	var posTemp = 0;
+	readline.createInterface({
+		input: fs.createReadStream(path),
+		terminal: false
+	}).on('line', function(line){
+		var idx = line.indexOf(originStr);
+		while (idx !== -1){
+			positions.push(posTemp + idx);
+			idx = line.indexOf(originStr, idx+1);
+		}
+		posTemp += line.length + 1;
+	}).on("close", function(){
+		done(null, { "file" : path, "positions" : positions});
+	});
+}
 // var searchIndex = require("search-index");
 // var data = require("./test.js");
 // var options = {};
