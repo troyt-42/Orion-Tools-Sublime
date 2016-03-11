@@ -668,6 +668,21 @@ class executeFixes(sublime_plugin.TextCommand):
 		if quickFixes[kind][index]["des"] not in reLintException:
 			self.view.run_command("orion_lint")
 
-
-
-
+class orionReferences(sublime_plugin.TextCommand):
+	def run(self, edit):
+		if self.view.file_name()[len(self.view.file_name()) -3:] == ".js":
+			originStr = self.view.substr(self.view.sel()[0]);
+			doc = {
+				"originStr" : originStr,
+				"root" : self.view.window().folders()[0]
+			}
+			data = None
+			print(doc)
+			try:
+				data = orionInstance.send_request(doc, "/References")
+			except Req_Error as e:
+				print("Error:" + e.message)
+				return None
+			except:
+				pass
+			print(data)

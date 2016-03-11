@@ -2,6 +2,7 @@
 var scriptResolver = require("./scriptResolver.js");
 var orionJSLib = require("./orionJavaScript.min.js");
 var orionJS = new orionJSLib(new scriptResolver(), false);
+var orionSearchClient = require("./orionSearchClient.js");
 var express = require("express");
 var app = express();
 var bodyParser = require("body-parser");
@@ -110,13 +111,14 @@ app.post("/", /* @callback */ function(req, res){
 app.post("/quickFixes", /* @callback */ function(req, res){
 	var id = data.id;
 	res.send(JSON.stringify(orionJS.quickFixes.retrieveFix(id)(data)));
+	data = '';
 });
-// var path = "C:\\Users\\IBM_ADMIN\\AppData\\Roaming\\Sublime Text 3\\Packages\\orion_reference_tool_sublime\\test.js";
-// var content = fs.readFileSync(path, "utf-8");
-// orionJS.Tern.lint(path, defaults, null, [{type: 'full', name: path, text: content}], function(result, err){
-// 	// console.log("Err:",err);
-// 	// console.log("Result:", result);
-// });
+
+app.post("/References", /* @callback */ function(req, res){
+	var searchLoc = data.root;
+	var originStr = data.originStr;
+	orionSearchClient.search(searchLoc, originStr, function(err, ress){ console.log(ress);res.send(ress);});
+});
 
 process.stdin.on("end", function() { process.exit(); });
 
