@@ -34,12 +34,19 @@ app.post("/References", /* @callback */ function(req, httpRes){
 	var textToSearch = data.textToSearch;
 	var files = data.files;
 	var fileName = data.fileName;
-	var totalFiles = files.length;
-	for (var p = files.length - 1; p >= 0; p--) {
-		uploadFileContent(files[p], function() {
-			if (!--totalFiles){ // execute search after files are uploaded
-				searchClient.search(searchLoc, textToSearch, /* @callback */ function(err, res){ 
-
+	var totalFiles = 0;
+	searchClient.search(searchLoc, textToSearch, /* @callback */ function(err, res){ 
+		for (var i = res.length - 1; i >= 0; i--) {
+			if (files.length < 3) {
+				files.push(res[i]["file"]);
+			} else {
+				break;
+			}
+		}
+		totalFiles = files.length;
+		for (var p = files.length - 1; p >= 0; p--) {
+			uploadFileContent(files[p], function() {
+				if (!--totalFiles){ // execute search after files are uploaded
 					var expected = [];
 					var pending = 0;
 					var pendingFiles = res.length;
@@ -49,6 +56,7 @@ app.post("/References", /* @callback */ function(req, httpRes){
 							var fileLoc = res[i2]["file"];
 							pending += positions.length;
 							// if(i2 === 0 ) { httpRes.send(JSON.stringify(pendingFiles)); }
+
 							for (var p2 = positions.length - 1; p2 >= 0; p2--) {
 								var match = { position : positions[p2], length : length, "path":fileLoc};
 								orionJS.Tern.checkRef(fileLoc, positions[p2], response, [], function(result, err){
@@ -85,10 +93,11 @@ app.post("/References", /* @callback */ function(req, httpRes){
 							}
 						}
 					});
-				});
-			}
-		});
-	}
+				}
+			});
+		}		
+	});
+	
 });
 
 function _sameOrigin(o1, o2) {

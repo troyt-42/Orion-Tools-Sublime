@@ -94,15 +94,16 @@ class orionReferences(sublime_plugin.TextCommand):
 				return None
 			except:
 				pass
+			print(data);
 			if data != None:
 				ref_result_view = self.view.window().new_file();
 				ref_result_view.set_scratch(True);
-
+				data = sorted(data, key=lambda dic: -dic.get("confidence", -2));
 				tempPoint = 0;
 				ref_result_view.insert(edit, tempPoint, "References Result\n\n")
 				tempPoint += len("References Result\n\n")
 				for result in data:
-					if result["confidence"] >= 0:
+					if result.get("confidence") != None:
 						ref_result_view.insert(edit, tempPoint, str(result["path"])+"\n")
 						tempPoint += len(str(result["path"])+"\n")
 						for key in result:
