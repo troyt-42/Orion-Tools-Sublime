@@ -9,8 +9,13 @@ A collection of plugins that provide Orion tools for Sublime.
 2. Run "npm install" to install the nodejs dependencies.
 
 # Screenshot #
-<img src="https://raw.githubusercontent.com/watrool/orion_tools_sublime/e2bec2d43770f2032a9e9b525d60ec6c6181a497/screenshot.png">
-<img src="https://github.com/watrool/orion_tools_sublime/blob/master/screenshot2.png">
+##Linter: ##
+<img src="https://github.com/watrool/orion_tools_sublime/raw/master/linter_screenshot.png">
+<img src="https://github.com/watrool/orion_tools_sublime/raw/master/linter_screenshot_2.png">
+<img src="https://github.com/watrool/orion_tools_sublime/raw/master/linter_screenshot_3.png">
+##References: ##
+<img src="https://github.com/watrool/orion_tools_sublime/raw/master/ref_screenshot_4.png">
+<img src="https://github.com/watrool/orion_tools_sublime/raw/master/ref_screenshot_5.png">
 
 # Notice #
 * Global variables like `console`, `require`, `define` should be added to `orion_global_variables.txt` to be recognized by the linter.
