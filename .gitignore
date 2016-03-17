@@ -2,3 +2,4 @@ node_modules/
 npm-debug.log
 server-log.txt
 test.json
+test.js

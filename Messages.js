@@ -1,4 +1,4 @@
-exports = {
+exports.messages = {
     'pluginName': 'Orion JavaScript Tool Support',
     'pluginDescription': 'This plug-in provides JavaScript tools support for Orion, like editing, search, navigation, validation, and code completion.',
 	'error': 'Error',
